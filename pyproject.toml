@@ -1,0 +1,20 @@
+[project]
+name = "algo-trading-2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "colorlog>=6.9.0",
+    "joblib>=1.5.1",
+    "kagglehub>=0.3.12",
+    "matplotlib>=3.10.3",
+    "numpy>=2.2.6",
+    "pandas-datareader>=0.10.0",
+    "scikit-learn>=1.7.0",
+    "statsmodels>=0.14.4",
+    "ta>=0.11.0",
+    "torch>=2.7.1",
+    "xgboost>=3.0.2",
+    "yfinance>=0.2.63",
+]

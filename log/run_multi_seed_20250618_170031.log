@@ -1,0 +1,36 @@
+2025-06-18 17:00:31,046 [INFO] Génération de l'exogenous dataset
+2025-06-18 17:00:31,047 [INFO] Chargement des données...
+2025-06-18 17:00:32,384 [INFO] Application de la différentiation fractionnaire...
+2025-06-18 17:00:39,992 [INFO] Calcul des indicateurs techniques...
+2025-06-18 17:00:40,447 [INFO] Génération des labels triple barriere...
+2025-06-18 17:00:40,529 [INFO] Colonnes supprimées à cause d'une corrélation > 0.95 : ['sma_50', 'ema_20', 'bb_upper', 'bb_lower']
+2025-06-18 17:00:41,093 [INFO] Dataset sauvegardé sous C:\CWE_DA\Python\algo-trading-2\exogenous_model\dataset\features_and_target\features_and_target.csv
+2025-06-18 17:01:03,946 [INFO] Dataset séquentiel sauvegardé sous C:\CWE_DA\Python\algo-trading-2\exogenous_model\dataset\features_and_target\sequential_dataset.npz avec noms de colonnes
+2025-06-18 17:01:04,008 [INFO] Démarrage de l'exécution multi-seeds : [42]
+2025-06-18 17:01:04,009 [INFO] --- Début du run avec seed 42 ---
+2025-06-18 17:01:04,103 [INFO] Entraînement du modèle principal
+2025-06-18 17:01:39,920 [DEBUG] Epoch 1/100 - Train Loss: 0.5326 - Val Loss: 0.4448 - Best Val Loss: inf
+2025-06-18 17:01:51,152 [DEBUG] Epoch 2/100 - Train Loss: 0.4459 - Val Loss: 0.3959 - Best Val Loss: 0.4448
+2025-06-18 17:02:02,389 [DEBUG] Epoch 3/100 - Train Loss: 0.4231 - Val Loss: 0.3655 - Best Val Loss: 0.3959
+2025-06-18 17:02:13,973 [DEBUG] Epoch 4/100 - Train Loss: 0.4056 - Val Loss: 0.3583 - Best Val Loss: 0.3655
+2025-06-18 17:02:27,632 [DEBUG] Epoch 5/100 - Train Loss: 0.3900 - Val Loss: 0.3671 - Best Val Loss: 0.3583
+2025-06-18 17:02:42,679 [DEBUG] Epoch 6/100 - Train Loss: 0.3921 - Val Loss: 0.3614 - Best Val Loss: 0.3583
+2025-06-18 17:02:54,051 [DEBUG] Epoch 7/100 - Train Loss: 0.3722 - Val Loss: 0.3680 - Best Val Loss: 0.3583
+2025-06-18 17:03:05,602 [DEBUG] Epoch 8/100 - Train Loss: 0.3686 - Val Loss: 0.3628 - Best Val Loss: 0.3583
+2025-06-18 17:03:18,308 [DEBUG] Epoch 9/100 - Train Loss: 0.3617 - Val Loss: 0.3632 - Best Val Loss: 0.3583
+2025-06-18 17:03:30,410 [DEBUG] Epoch 10/100 - Train Loss: 0.3513 - Val Loss: 0.3639 - Best Val Loss: 0.3583
+2025-06-18 17:03:42,684 [DEBUG] Epoch 11/100 - Train Loss: 0.3365 - Val Loss: 0.3564 - Best Val Loss: 0.3583
+2025-06-18 17:03:53,845 [DEBUG] Epoch 12/100 - Train Loss: 0.3553 - Val Loss: 0.3461 - Best Val Loss: 0.3564
+2025-06-18 17:04:05,085 [DEBUG] Epoch 13/100 - Train Loss: 0.3757 - Val Loss: 0.3678 - Best Val Loss: 0.3461
+2025-06-18 17:04:16,143 [DEBUG] Epoch 14/100 - Train Loss: 0.3348 - Val Loss: 0.3527 - Best Val Loss: 0.3461
+2025-06-18 17:04:27,470 [DEBUG] Epoch 15/100 - Train Loss: 0.3405 - Val Loss: 0.3532 - Best Val Loss: 0.3461
+2025-06-18 17:04:39,018 [DEBUG] Epoch 16/100 - Train Loss: 0.3124 - Val Loss: 0.3573 - Best Val Loss: 0.3461
+2025-06-18 17:04:49,880 [DEBUG] Epoch 17/100 - Train Loss: 0.3014 - Val Loss: 0.3485 - Best Val Loss: 0.3461
+2025-06-18 17:05:01,353 [DEBUG] Epoch 18/100 - Train Loss: 0.3168 - Val Loss: 0.3440 - Best Val Loss: 0.3461
+2025-06-18 17:05:12,750 [DEBUG] Epoch 19/100 - Train Loss: 0.2937 - Val Loss: 0.3446 - Best Val Loss: 0.3440
+2025-06-18 17:05:23,818 [DEBUG] Epoch 20/100 - Train Loss: 0.2929 - Val Loss: 0.3575 - Best Val Loss: 0.3440
+2025-06-18 17:05:35,226 [DEBUG] Epoch 21/100 - Train Loss: 0.3158 - Val Loss: 0.3013 - Best Val Loss: 0.3440
+2025-06-18 17:05:46,269 [DEBUG] Epoch 22/100 - Train Loss: 0.2873 - Val Loss: 0.3799 - Best Val Loss: 0.3013
+2025-06-18 17:05:57,629 [DEBUG] Epoch 23/100 - Train Loss: 0.2964 - Val Loss: 0.3348 - Best Val Loss: 0.3013
+2025-06-18 17:06:09,114 [DEBUG] Epoch 24/100 - Train Loss: 0.2559 - Val Loss: 0.3897 - Best Val Loss: 0.3013
+2025-06-18 17:06:23,287 [DEBUG] Epoch 25/100 - Train Loss: 0.2796 - Val Loss: 0.2798 - Best Val Loss: 0.3013

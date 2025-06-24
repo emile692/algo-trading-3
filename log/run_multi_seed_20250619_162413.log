@@ -1,0 +1,28 @@
+2025-06-19 16:24:13,327 [INFO] Génération de l'exogenous dataset
+2025-06-19 16:24:13,329 [INFO] Chargement des données...
+2025-06-19 16:24:14,974 [INFO] Analyse de la stationnarité pour différents d...
+2025-06-19 16:24:40,395 [DEBUG] d = 0.20 | p-value = 0.0156 => Stationnaire
+2025-06-19 16:25:08,205 [DEBUG] d = 0.30 | p-value = 0.0000 => Stationnaire
+2025-06-19 16:25:36,651 [DEBUG] d = 0.40 | p-value = 0.0000 => Stationnaire
+2025-06-19 16:26:05,841 [DEBUG] d = 0.50 | p-value = 0.0000 => Stationnaire
+2025-06-19 16:26:37,774 [DEBUG] d = 0.60 | p-value = 0.0000 => Stationnaire
+2025-06-19 16:26:37,775 [INFO] d sélectionné pour la différentiation fractionnaire : 0.2
+2025-06-19 16:27:03,687 [INFO] Calcul des indicateurs techniques...
+2025-06-19 16:28:49,002 [INFO] Nettoyage des données...
+2025-06-19 16:28:49,019 [INFO] Génération des labels triple barrière...
+2025-06-19 16:28:49,983 [DEBUG] Window: 4h - Distribution des labels: {0: 0.7587039088463364, 2: 0.12577148282956163, 1: 0.11552460832410191}
+2025-06-19 16:28:51,131 [DEBUG] Window: 8h - Distribution des labels: {0: 0.5913514796645039, 2: 0.2089729387561323, 1: 0.19967558157936383}
+2025-06-19 16:28:52,341 [DEBUG] Window: 12h - Distribution des labels: {0: 0.4903070106029435, 2: 0.2576357018515588, 1: 0.2520572875454977}
+2025-06-19 16:28:53,732 [DEBUG] Window: 24h - Distribution des labels: {0: 0.37648362082608006, 1: 0.31377591391042886, 2: 0.3097404652634911}
+2025-06-19 16:28:55,648 [DEBUG] Window: 48h - Distribution des labels: {0: 0.35852191802500394, 1: 0.32311283430922616, 2: 0.3183652476657699}
+2025-06-19 16:28:55,649 [INFO] PREDICTION_WINDOW sélectionnée : 24
+2025-06-19 16:28:57,279 [INFO] Colonnes supprimées à cause d'une corrélation > 0.95 : ['high', 'low', 'close', 'sma_50', 'sma_200', 'ema_20', 'ema_100', 'rsi_dist_oversold', 'rsi_dist_overbought', 'bb_upper', 'bb_lower', 'price_diff_1', 'williams_r', 'kama', 'vwap']
+2025-06-19 16:28:58,893 [INFO] Dataset sauvegardé sous C:\CWE_DA\Python\algo-trading-2\exogenous_model\dataset\features_and_target\features_and_target.csv
+2025-06-19 16:28:58,894 [INFO] Construction des séquences...
+2025-06-19 16:31:30,855 [INFO] Dataset séquentiel sauvegardé sous C:\CWE_DA\Python\algo-trading-2\exogenous_model\dataset\features_and_target\sequential_dataset.npz avec noms de colonnes
+2025-06-19 16:31:31,951 [INFO] Démarrage de l'exécution multi-seeds : [42]
+
+2025-06-19 16:31:31,952 [INFO] --- Début du run avec seed 42 ---
+2025-06-19 16:31:32,058 [INFO] Entraînement du modèle principal
+2025-06-19 16:32:39,131 [DEBUG] [Epoch 1/100] Train Loss: 0.4869 | Val Loss: 0.4820 | Best Val Loss: inf | 
+2025-06-19 16:33:55,035 [DEBUG] [Epoch 6/100] Train Loss: 0.3672 | Val Loss: 0.3875 | Best Val Loss: 0.4058 | 

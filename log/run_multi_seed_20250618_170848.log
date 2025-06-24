@@ -1,0 +1,20 @@
+2025-06-18 17:08:48,698 [INFO] Génération de l'exogenous dataset
+2025-06-18 17:08:48,699 [INFO] Chargement des données...
+2025-06-18 17:08:49,831 [INFO] Application de la différentiation fractionnaire...
+2025-06-18 17:09:06,909 [INFO] Calcul des indicateurs techniques...
+2025-06-18 17:09:07,283 [INFO] Génération des labels triple barriere...
+2025-06-18 17:09:07,853 [INFO] Colonnes supprimées à cause d'une corrélation > 0.95 : ['sma_50', 'ema_20', 'bb_upper', 'bb_lower']
+2025-06-18 17:09:08,282 [INFO] Dataset sauvegardé sous C:\CWE_DA\Python\algo-trading-2\exogenous_model\dataset\features_and_target\features_and_target.csv
+2025-06-18 17:09:45,168 [INFO] Dataset séquentiel sauvegardé sous C:\CWE_DA\Python\algo-trading-2\exogenous_model\dataset\features_and_target\sequential_dataset.npz avec noms de colonnes
+2025-06-18 17:09:45,235 [INFO] Démarrage de l'exécution multi-seeds : [42]
+2025-06-18 17:09:45,236 [INFO] --- Début du run avec seed 42 ---
+2025-06-18 17:09:45,343 [INFO] Entraînement du modèle principal
+2025-06-18 17:10:24,040 [DEBUG] Epoch 1/100 - Train Loss: 0.5326 - Val Loss: 0.4448 - Best Val Loss: inf
+2025-06-18 17:10:35,736 [DEBUG] Epoch 2/100 - Train Loss: 0.4459 - Val Loss: 0.3959 - Best Val Loss: 0.4448
+2025-06-18 17:10:47,165 [DEBUG] Epoch 3/100 - Train Loss: 0.4231 - Val Loss: 0.3655 - Best Val Loss: 0.3959
+2025-06-18 17:10:58,223 [DEBUG] Epoch 4/100 - Train Loss: 0.4056 - Val Loss: 0.3583 - Best Val Loss: 0.3655
+2025-06-18 17:11:10,043 [DEBUG] Epoch 5/100 - Train Loss: 0.3900 - Val Loss: 0.3671 - Best Val Loss: 0.3583
+2025-06-18 17:11:21,571 [DEBUG] Epoch 6/100 - Train Loss: 0.3921 - Val Loss: 0.3614 - Best Val Loss: 0.3583
+2025-06-18 17:11:32,965 [DEBUG] Epoch 7/100 - Train Loss: 0.3722 - Val Loss: 0.3680 - Best Val Loss: 0.3583
+2025-06-18 17:11:44,708 [DEBUG] Epoch 8/100 - Train Loss: 0.3686 - Val Loss: 0.3628 - Best Val Loss: 0.3583
+2025-06-18 17:11:56,036 [DEBUG] Epoch 9/100 - Train Loss: 0.3617 - Val Loss: 0.3632 - Best Val Loss: 0.3583

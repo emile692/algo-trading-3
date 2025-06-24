@@ -1,0 +1,149 @@
+2025-06-20 11:19:51,967 [INFO] Génération de l'exogenous dataset
+2025-06-20 11:19:51,969 [INFO] Chargement des données...
+2025-06-20 11:19:53,617 [INFO] Analyse de la stationnarité pour différents d...
+2025-06-20 11:20:08,978 [DEBUG] d = 0.20 | p-value = 0.0156 => Stationnaire
+2025-06-20 11:20:23,923 [DEBUG] d = 0.30 | p-value = 0.0000 => Stationnaire
+2025-06-20 11:20:39,983 [DEBUG] d = 0.40 | p-value = 0.0000 => Stationnaire
+2025-06-20 11:20:56,081 [DEBUG] d = 0.50 | p-value = 0.0000 => Stationnaire
+2025-06-20 11:21:12,835 [DEBUG] d = 0.60 | p-value = 0.0000 => Stationnaire
+2025-06-20 11:21:12,840 [INFO] d sélectionné pour la différentiation fractionnaire : 0.2
+2025-06-20 11:21:23,473 [INFO] Calcul des indicateurs techniques...
+2025-06-20 11:22:28,633 [INFO] Nettoyage des données...
+2025-06-20 11:22:28,657 [INFO] Génération des labels triple barrière...
+2025-06-20 11:22:29,477 [DEBUG] Window: 4h - Distribution des labels: {0: 0.7587039088463364, 2: 0.12577148282956163, 1: 0.11552460832410191}
+2025-06-20 11:22:30,306 [DEBUG] Window: 8h - Distribution des labels: {0: 0.5913514796645039, 2: 0.2089729387561323, 1: 0.19967558157936383}
+2025-06-20 11:22:31,172 [DEBUG] Window: 12h - Distribution des labels: {0: 0.4903070106029435, 2: 0.2576357018515588, 1: 0.2520572875454977}
+2025-06-20 11:22:32,166 [DEBUG] Window: 24h - Distribution des labels: {0: 0.37648362082608006, 1: 0.31377591391042886, 2: 0.3097404652634911}
+2025-06-20 11:22:33,714 [DEBUG] Window: 48h - Distribution des labels: {0: 0.35852191802500394, 1: 0.32311283430922616, 2: 0.3183652476657699}
+2025-06-20 11:22:33,715 [INFO] PREDICTION_WINDOW sélectionnée : 24
+2025-06-20 11:22:35,461 [INFO] Colonnes supprimées à cause d'une corrélation > 0.95 : ['high', 'low', 'close', 'sma_50', 'sma_200', 'ema_20', 'ema_100', 'rsi_dist_oversold', 'rsi_dist_overbought', 'bb_upper', 'bb_lower', 'price_diff_1', 'williams_r', 'kama', 'vwap']
+2025-06-20 11:22:38,980 [INFO] Dataset sauvegardé sous C:\CWE_DA\Python\algo-trading-2\exogenous_model\dataset\features_and_target\features_and_target.csv
+2025-06-20 11:22:38,981 [INFO] Construction des séquences...
+2025-06-20 11:25:34,180 [INFO] Dataset séquentiel sauvegardé sous C:\CWE_DA\Python\algo-trading-2\exogenous_model\dataset\features_and_target\sequential_dataset.npz avec noms de colonnes
+2025-06-20 11:25:36,547 [INFO] Démarrage de l'exécution multi-seeds : [42, 2043]
+
+2025-06-20 11:25:36,548 [INFO] --- Début du run avec seed 42 ---
+2025-06-20 11:25:37,608 [INFO] Entraînement du modèle principal
+2025-06-20 11:36:50,914 [DEBUG] [Epoch 1/100] Train Loss: 0.4869 | Val Loss: 0.4820 | Best Val Loss: inf | 
+2025-06-20 12:10:20,883 [DEBUG] [Epoch 6/100] Train Loss: 0.3672 | Val Loss: 0.3875 | Best Val Loss: 0.4058 | 
+2025-06-20 12:51:13,024 [DEBUG] [Epoch 11/100] Train Loss: 0.2837 | Val Loss: 0.3339 | Best Val Loss: 0.3455 | 
+2025-06-20 12:55:14,291 [DEBUG] [Epoch 16/100] Train Loss: 0.2489 | Val Loss: 0.3146 | Best Val Loss: 0.3194 | 
+2025-06-20 12:57:33,056 [DEBUG] [Epoch 21/100] Train Loss: 0.2047 | Val Loss: 0.3107 | Best Val Loss: 0.3103 | 
+2025-06-20 13:00:12,965 [DEBUG] [Epoch 26/100] Train Loss: 0.2016 | Val Loss: 0.3051 | Best Val Loss: 0.3103 | 
+2025-06-20 13:03:51,906 [DEBUG] [Epoch 31/100] Train Loss: 0.1746 | Val Loss: 0.3128 | Best Val Loss: 0.3051 | 
+2025-06-20 13:05:52,935 [DEBUG] [Epoch 36/100] Train Loss: 0.1589 | Val Loss: 0.3179 | Best Val Loss: 0.3051 | 
+2025-06-20 13:05:52,935 [INFO] Early stopping at epoch 36
+2025-06-20 13:05:53,718 [INFO] Évaluation du modèle principal
+2025-06-20 13:05:55,329 [INFO] Accuracy: 0.6539, Precision: 0.6528, Recall: 0.6641, F1: 0.6540
+2025-06-20 13:05:55,349 [INFO] Génération du dataset méta
+2025-06-20 13:05:56,981 [INFO] Prédiction du modèle principal ...
+2025-06-20 13:06:05,540 [INFO] Méta labels créés
+2025-06-20 13:12:55,096 [INFO] Dataset sauvegardé sous C:\CWE_DA\Python\algo-trading-2\meta_model\dataset\features_and_target\meta_dataset_seed_42.csv
+2025-06-20 13:12:55,289 [INFO] Entraînement et évaluation du modèle XGBoost méta
+2025-06-20 13:13:56,191 [INFO] Distribution des classes méta: Classe 0 (erreur): 27.87%, Classe 1 (correct): 72.13%
+2025-06-20 13:13:57,649 [INFO] Optimisation du seuil de décision par validation croisée...
+2025-06-20 13:18:55,458 [INFO] Fold 1: seuil optimal = 0.6253
+2025-06-20 13:21:21,357 [INFO] Fold 2: seuil optimal = 0.5600
+2025-06-20 13:23:07,662 [INFO] Fold 3: seuil optimal = 0.5437
+2025-06-20 13:23:07,663 [INFO] Seuil optimal médian: 0.5600
+2025-06-20 13:23:07,664 [INFO] Entraînement final du méta-modèle...
+2025-06-20 13:29:22,257 [INFO] Calibration du modèle...
+2025-06-20 13:29:24,251 [INFO] Évaluation sur le set de test :
+2025-06-20 13:29:24,271 [INFO]               precision    recall  f1-score   support
+
+           0       0.40      0.22      0.28      1398
+           1       0.74      0.87      0.80      3618
+
+    accuracy                           0.69      5016
+   macro avg       0.57      0.55      0.54      5016
+weighted avg       0.65      0.69      0.66      5016
+
+2025-06-20 13:29:24,294 [INFO] ROC AUC Score : 0.589286
+2025-06-20 13:29:24,297 [INFO] Matrice de confusion :
+[[ 307 1091]
+ [ 458 3160]]
+2025-06-20 13:29:24,298 [INFO] Classe 1 - Precision: 0.7434, Recall: 0.8734, F1: 0.8032
+2025-06-20 13:29:24,321 [INFO] Top 10 des features importantes:
+2025-06-20 13:29:24,321 [INFO]   4753: 0.0021
+2025-06-20 13:29:24,322 [INFO]   3559: 0.0020
+2025-06-20 13:29:24,322 [INFO]   4105: 0.0019
+2025-06-20 13:29:24,322 [INFO]   5374: 0.0014
+2025-06-20 13:29:24,322 [INFO]   4132: 0.0012
+2025-06-20 13:29:24,323 [INFO]   4234: 0.0011
+2025-06-20 13:29:24,323 [INFO]   4369: 0.0010
+2025-06-20 13:29:24,323 [INFO]   3586: 0.0009
+2025-06-20 13:29:24,323 [INFO]   5395: 0.0009
+2025-06-20 13:29:24,323 [INFO]   4396: 0.0009
+2025-06-20 13:29:24,362 [INFO] Modèle sauvegardé : C:\CWE_DA\Python\algo-trading-2\meta_model\results\seed_42\xgboost_meta_model_seed_42.joblib
+2025-06-20 13:29:26,259 [INFO] Analyse du capture ratio
+2025-06-20 13:29:27,332 [INFO] --- Fin du run avec seed 42 ---
+
+2025-06-20 13:29:27,332 [INFO] --- Début du run avec seed 2043 ---
+2025-06-20 13:29:27,392 [INFO] Entraînement du modèle principal
+2025-06-20 13:30:24,187 [DEBUG] [Epoch 1/100] Train Loss: 0.4853 | Val Loss: 0.4871 | Best Val Loss: inf | 
+2025-06-20 13:32:42,328 [DEBUG] [Epoch 6/100] Train Loss: 0.3624 | Val Loss: 0.3923 | Best Val Loss: 0.4188 | 
+2025-06-20 13:34:27,385 [DEBUG] [Epoch 11/100] Train Loss: 0.2670 | Val Loss: 0.3376 | Best Val Loss: 0.3434 | 
+2025-06-20 13:37:24,547 [DEBUG] [Epoch 16/100] Train Loss: 0.2261 | Val Loss: 0.3148 | Best Val Loss: 0.3222 | 
+2025-06-20 13:39:00,637 [DEBUG] [Epoch 21/100] Train Loss: 0.2036 | Val Loss: 0.3231 | Best Val Loss: 0.3084 | 
+2025-06-20 13:40:46,388 [DEBUG] [Epoch 26/100] Train Loss: 0.1830 | Val Loss: 0.3171 | Best Val Loss: 0.3084 | 
+2025-06-20 13:42:21,658 [INFO] Early stopping at epoch 30
+2025-06-20 13:42:22,001 [INFO] Évaluation du modèle principal
+2025-06-20 13:42:23,432 [INFO] Accuracy: 0.6300, Precision: 0.6275, Recall: 0.6438, F1: 0.6277
+2025-06-20 13:42:23,449 [INFO] Génération du dataset méta
+2025-06-20 13:42:24,351 [INFO] Prédiction du modèle principal ...
+2025-06-20 13:42:30,989 [INFO] Méta labels créés
+2025-06-20 13:50:14,980 [INFO] Dataset sauvegardé sous C:\CWE_DA\Python\algo-trading-2\meta_model\dataset\features_and_target\meta_dataset_seed_2043.csv
+2025-06-20 13:50:15,159 [INFO] Entraînement et évaluation du modèle XGBoost méta
+2025-06-20 13:51:35,851 [INFO] Distribution des classes méta: Classe 0 (erreur): 29.99%, Classe 1 (correct): 70.01%
+2025-06-20 13:51:37,589 [INFO] Optimisation du seuil de décision par validation croisée...
+2025-06-20 13:55:47,897 [INFO] Fold 1: seuil optimal = 0.5641
+2025-06-20 13:56:21,674 [ERROR] Erreur lors du traitement du seed 2043: bad allocation
+Traceback (most recent call last):
+  File "C:\CWE_DA\Python\algo-trading-2\run_multi_seed.py", line 108, in run_multi_seed
+    meta_metrics = train_and_test_meta_xgboost(seed=seed, logger=logger)
+  File "C:\CWE_DA\Python\algo-trading-2\meta_model\train_and_test\train_test_meta_xgboost.py", line 92, in train_and_test_meta_xgboost
+    best_threshold = np.median(thresholds)
+  File "C:\CWE_DA\Python\algo-trading-2\.venv\lib\site-packages\xgboost\core.py", line 729, in inner_f
+    return func(**kwargs)
+  File "C:\CWE_DA\Python\algo-trading-2\.venv\lib\site-packages\xgboost\sklearn.py", line 1663, in fit
+    train_dmatrix, evals = _wrap_evaluation_matrices(
+  File "C:\CWE_DA\Python\algo-trading-2\.venv\lib\site-packages\xgboost\sklearn.py", line 628, in _wrap_evaluation_matrices
+    train_dmatrix = create_dmatrix(
+  File "C:\CWE_DA\Python\algo-trading-2\.venv\lib\site-packages\xgboost\sklearn.py", line 1137, in _create_dmatrix
+    return QuantileDMatrix(
+  File "C:\CWE_DA\Python\algo-trading-2\.venv\lib\site-packages\xgboost\core.py", line 729, in inner_f
+    return func(**kwargs)
+  File "C:\CWE_DA\Python\algo-trading-2\.venv\lib\site-packages\xgboost\core.py", line 1614, in __init__
+    self._init(
+  File "C:\CWE_DA\Python\algo-trading-2\.venv\lib\site-packages\xgboost\core.py", line 1680, in _init
+    _check_call(ret)
+  File "C:\CWE_DA\Python\algo-trading-2\.venv\lib\site-packages\xgboost\core.py", line 310, in _check_call
+    raise XGBoostError(py_str(_LIB.XGBGetLastError()))
+xgboost.core.XGBoostError: bad allocation
+2025-06-20 13:56:22,250 [INFO] Moyenne des scores sur tous les seeds :
+2025-06-20 13:56:22,251 [INFO] accuracy                0.6419
+precision_macro         0.6402
+recall_macro            0.6540
+f1_macro                0.6408
+seed                 1042.5000
+roc_auc                 0.5893
+class1_precision        0.7434
+class1_recall           0.8734
+meta_class_dist_0       0.2787
+meta_class_dist_1       0.7213
+meta_f1_score           0.8032
+dtype: float64
+2025-06-20 13:56:22,255 [INFO] Écart-type des scores :
+2025-06-20 13:56:22,256 [INFO] accuracy                0.0169
+precision_macro         0.0179
+recall_macro            0.0144
+f1_macro                0.0186
+seed                 1414.9207
+roc_auc                    NaN
+class1_precision           NaN
+class1_recall              NaN
+meta_class_dist_0          NaN
+meta_class_dist_1          NaN
+meta_f1_score              NaN
+dtype: float64
+2025-06-20 13:56:22,262 [INFO] Résultats enregistrés dans meta_model/results/results_multi_seed.csv

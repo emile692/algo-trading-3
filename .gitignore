@@ -1,0 +1,25 @@
+# Environnement
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.env
+*.venv
+env/
+venv/
+
+# IDE
+.idea/
+.vscode/
+
+
+# Fichiers UV
+uv.lock
+
+# Données temporaires
+exogenous_model/**/__pycache__/
+meta_model/**/__pycache__/
+**/checkpoints/
+**/features_and_target/
+**/splits/
+meta_model/results/

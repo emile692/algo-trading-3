@@ -1,0 +1,98 @@
+2025-06-18 16:35:30,839 [INFO] Génération de l'exogenous dataset
+2025-06-18 16:35:30,840 [INFO] Téléchargement des données...
+2025-06-18 16:35:32,316 [INFO] Calcul des indicateurs techniques...
+2025-06-18 16:36:32,238 [INFO] Lignes avant nettoyage : 29050
+2025-06-18 16:36:32,256 [INFO] Lignes après nettoyage : 28339
+2025-06-18 16:36:32,256 [INFO] Création des labels...
+2025-06-18 16:36:33,099 [INFO] Sélection des colonnes...
+2025-06-18 16:36:33,419 [INFO] Colonnes supprimées à cause d'une corrélation > 0.95 : ['rsi_dist_oversold', 'rsi_dist_overbought', 'sma_50', 'sma_200', 'ema_20', 'ema_100', 'bb_upper', 'bb_lower', 'macd_signal', 'williams_r', 'kama', 'vwap', 'price_diff_1']
+2025-06-18 16:36:35,976 [INFO] Dataset sauvegardé sous C:\CWE_DA\Python\algo-trading-2\exogenous_model\dataset\features_and_target\features_and_target.csv
+2025-06-18 16:39:14,019 [INFO] Dataset séquentiel sauvegardé sous C:\CWE_DA\Python\algo-trading-2\exogenous_model\dataset\features_and_target\sequential_dataset.npz avec noms de colonnes
+2025-06-18 16:39:16,082 [INFO] Démarrage de l'exécution multi-seeds : [42, 2043]
+2025-06-18 16:39:16,082 [INFO] --- Début du run avec seed 42 ---
+2025-06-18 16:39:16,245 [INFO] Entraînement du modèle principal
+2025-06-18 16:39:41,127 [ERROR] Erreur lors du traitement du seed 42: Unable to allocate 155. MiB for an array with shape (4222, 200, 24) and data type float64
+Traceback (most recent call last):
+  File "C:\CWE_DA\Python\algo-trading-2\run_multi_seed.py", line 94, in run_multi_seed
+    model_path, scaler_path = train_and_save_model(seed=seed, logger=logger)
+  File "C:\CWE_DA\Python\algo-trading-2\exogenous_model\train\train_model.py", line 88, in train_and_save_model
+    X_test = X_scaled[test_set.indices]
+numpy._core._exceptions._ArrayMemoryError: Unable to allocate 155. MiB for an array with shape (4222, 200, 24) and data type float64
+2025-06-18 16:39:41,749 [INFO] --- Début du run avec seed 2043 ---
+2025-06-18 16:39:41,756 [INFO] Entraînement du modèle principal
+2025-06-18 16:40:56,947 [DEBUG] Epoch 1/100 - Train Loss: 0.5499 - Val Loss: 0.5519 - Best Val Loss: inf
+2025-06-18 16:41:10,135 [DEBUG] Epoch 2/100 - Train Loss: 0.5371 - Val Loss: 0.5427 - Best Val Loss: 0.5519
+2025-06-18 16:41:23,244 [DEBUG] Epoch 3/100 - Train Loss: 0.5228 - Val Loss: 0.5311 - Best Val Loss: 0.5427
+2025-06-18 16:41:36,681 [DEBUG] Epoch 4/100 - Train Loss: 0.5008 - Val Loss: 0.5151 - Best Val Loss: 0.5311
+2025-06-18 16:41:53,346 [DEBUG] Epoch 5/100 - Train Loss: 0.4713 - Val Loss: 0.4958 - Best Val Loss: 0.5151
+2025-06-18 16:42:09,041 [DEBUG] Epoch 6/100 - Train Loss: 0.4402 - Val Loss: 0.4826 - Best Val Loss: 0.4958
+2025-06-18 16:42:24,561 [DEBUG] Epoch 7/100 - Train Loss: 0.4125 - Val Loss: 0.4679 - Best Val Loss: 0.4826
+2025-06-18 16:42:39,915 [DEBUG] Epoch 8/100 - Train Loss: 0.3874 - Val Loss: 0.4535 - Best Val Loss: 0.4679
+2025-06-18 16:42:52,075 [DEBUG] Epoch 9/100 - Train Loss: 0.3624 - Val Loss: 0.4445 - Best Val Loss: 0.4535
+2025-06-18 16:43:05,456 [DEBUG] Epoch 10/100 - Train Loss: 0.3472 - Val Loss: 0.4423 - Best Val Loss: 0.4445
+2025-06-18 16:43:19,411 [DEBUG] Epoch 11/100 - Train Loss: 0.3273 - Val Loss: 0.4345 - Best Val Loss: 0.4423
+2025-06-18 16:43:33,163 [DEBUG] Epoch 12/100 - Train Loss: 0.3171 - Val Loss: 0.4278 - Best Val Loss: 0.4345
+2025-06-18 16:43:46,475 [DEBUG] Epoch 13/100 - Train Loss: 0.3024 - Val Loss: 0.4202 - Best Val Loss: 0.4278
+2025-06-18 16:43:59,421 [DEBUG] Epoch 14/100 - Train Loss: 0.2918 - Val Loss: 0.4168 - Best Val Loss: 0.4202
+2025-06-18 16:44:13,400 [DEBUG] Epoch 15/100 - Train Loss: 0.2822 - Val Loss: 0.4165 - Best Val Loss: 0.4168
+2025-06-18 16:44:26,915 [DEBUG] Epoch 16/100 - Train Loss: 0.2668 - Val Loss: 0.4122 - Best Val Loss: 0.4165
+2025-06-18 16:44:40,350 [DEBUG] Epoch 17/100 - Train Loss: 0.2662 - Val Loss: 0.4137 - Best Val Loss: 0.4122
+2025-06-18 16:44:53,608 [DEBUG] Epoch 18/100 - Train Loss: 0.2559 - Val Loss: 0.4216 - Best Val Loss: 0.4122
+2025-06-18 16:45:06,850 [DEBUG] Epoch 19/100 - Train Loss: 0.2513 - Val Loss: 0.4115 - Best Val Loss: 0.4122
+2025-06-18 16:45:19,887 [DEBUG] Epoch 20/100 - Train Loss: 0.2372 - Val Loss: 0.4144 - Best Val Loss: 0.4115
+2025-06-18 16:45:32,751 [DEBUG] Epoch 21/100 - Train Loss: 0.2328 - Val Loss: 0.4275 - Best Val Loss: 0.4115
+2025-06-18 16:45:45,198 [DEBUG] Epoch 22/100 - Train Loss: 0.2331 - Val Loss: 0.4196 - Best Val Loss: 0.4115
+2025-06-18 16:45:57,061 [DEBUG] Epoch 23/100 - Train Loss: 0.2228 - Val Loss: 0.4112 - Best Val Loss: 0.4115
+2025-06-18 16:46:10,125 [DEBUG] Epoch 24/100 - Train Loss: 0.2291 - Val Loss: 0.4256 - Best Val Loss: 0.4112
+2025-06-18 16:46:25,124 [DEBUG] Epoch 25/100 - Train Loss: 0.2125 - Val Loss: 0.4342 - Best Val Loss: 0.4112
+2025-06-18 16:46:39,159 [DEBUG] Epoch 26/100 - Train Loss: 0.2081 - Val Loss: 0.4144 - Best Val Loss: 0.4112
+2025-06-18 16:46:53,754 [DEBUG] Epoch 27/100 - Train Loss: 0.2036 - Val Loss: 0.4272 - Best Val Loss: 0.4112
+2025-06-18 16:47:07,941 [DEBUG] Epoch 28/100 - Train Loss: 0.1992 - Val Loss: 0.4288 - Best Val Loss: 0.4112
+2025-06-18 16:47:20,833 [DEBUG] Epoch 29/100 - Train Loss: 0.2002 - Val Loss: 0.4262 - Best Val Loss: 0.4112
+2025-06-18 16:47:33,580 [DEBUG] Epoch 30/100 - Train Loss: 0.1942 - Val Loss: 0.4329 - Best Val Loss: 0.4112
+2025-06-18 16:47:46,623 [DEBUG] Epoch 31/100 - Train Loss: 0.2183 - Val Loss: 0.4504 - Best Val Loss: 0.4112
+2025-06-18 16:47:59,594 [DEBUG] Epoch 32/100 - Train Loss: 0.2046 - Val Loss: 0.4224 - Best Val Loss: 0.4112
+2025-06-18 16:48:12,733 [DEBUG] Epoch 33/100 - Train Loss: 0.1887 - Val Loss: 0.4324 - Best Val Loss: 0.4112
+2025-06-18 16:48:12,734 [INFO] Early stopping at epoch 33
+2025-06-18 16:48:13,066 [INFO] Évaluation du modèle principal
+2025-06-18 16:48:14,278 [INFO] Accuracy: 0.5050, Precision: 0.5453, Recall: 0.6171, F1: 0.5092
+2025-06-18 16:48:14,296 [INFO] Génération du dataset méta
+2025-06-18 16:48:14,296 [INFO] Traitement du seed 2043...
+2025-06-18 16:48:15,400 [INFO] X_train shape: (19697, 200, 24)
+2025-06-18 16:54:28,539 [INFO] Dataset sauvegardé sous C:\CWE_DA\Python\algo-trading-2\meta_model\dataset\features_and_target\meta_dataset_seed_2043.csv
+2025-06-18 16:54:28,539 [INFO] Fichier sauvegardé : C:\CWE_DA\Python\algo-trading-2\meta_model\dataset\features_and_target\meta_dataset_seed_2043.csv
+2025-06-18 16:54:28,704 [INFO] Entraînement et évaluation du modèle XGBoost méta
+2025-06-18 16:55:26,815 [INFO] Entraînement du méta-modèle...
+2025-06-18 16:57:10,296 [INFO] Évaluation sur le set de test :
+2025-06-18 16:57:10,316 [INFO]               precision    recall  f1-score   support
+
+           0       0.64      0.45      0.53      2495
+           1       0.65      0.80      0.71      3133
+
+    accuracy                           0.64      5628
+   macro avg       0.64      0.62      0.62      5628
+weighted avg       0.64      0.64      0.63      5628
+
+2025-06-18 16:57:10,321 [INFO] ROC AUC Score : 0.623513
+2025-06-18 16:57:10,324 [INFO] Confusion Matrix :
+[[1126 1369]
+ [ 640 2493]]
+2025-06-18 16:57:10,341 [INFO] Modèle sauvegardé : xgboost_meta_model.joblib
+2025-06-18 16:57:11,152 [INFO] Analyse du capture ratio
+2025-06-18 16:57:11,780 [INFO] --- Fin du run avec seed 2043 ---
+
+2025-06-18 16:57:11,782 [INFO] Moyenne des scores sur tous les seeds :
+2025-06-18 16:57:11,783 [INFO] accuracy              0.5050
+precision_macro       0.5453
+recall_macro          0.6171
+f1_macro              0.5092
+seed               2043.0000
+dtype: float64
+2025-06-18 16:57:11,787 [INFO] Écart-type des scores :
+2025-06-18 16:57:11,789 [INFO] accuracy          NaN
+precision_macro   NaN
+recall_macro      NaN
+f1_macro          NaN
+seed              NaN
+dtype: float64
+2025-06-18 16:57:11,794 [INFO] Résultats enregistrés dans meta_model/results/results_multi_seed.csv

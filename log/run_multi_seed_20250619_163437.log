@@ -1,0 +1,10 @@
+2025-06-19 16:34:37,203 [INFO] Génération de l'exogenous dataset
+2025-06-19 16:34:37,204 [INFO] Chargement des données...
+2025-06-19 16:34:38,462 [INFO] Analyse de la stationnarité pour différents d...
+2025-06-19 16:34:47,679 [DEBUG] d = 0.20 | p-value = 0.0156 => Stationnaire
+2025-06-19 16:34:56,840 [DEBUG] d = 0.30 | p-value = 0.0000 => Stationnaire
+2025-06-19 16:35:15,370 [DEBUG] d = 0.40 | p-value = 0.0000 => Stationnaire
+2025-06-19 16:35:27,744 [DEBUG] d = 0.50 | p-value = 0.0000 => Stationnaire
+2025-06-19 16:35:39,710 [DEBUG] d = 0.60 | p-value = 0.0000 => Stationnaire
+2025-06-19 16:35:39,715 [INFO] d sélectionné pour la différentiation fractionnaire : 0.2
+2025-06-19 16:35:48,802 [INFO] Calcul des indicateurs techniques...
