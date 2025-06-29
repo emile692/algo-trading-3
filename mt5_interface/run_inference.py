@@ -2,24 +2,40 @@
 import numpy as np
 import pandas as pd
 import torch
+
+from exogenous_model.dataset.generate_dataset import preprocess_data
 from inference_utils import load_models
 import os
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-input_path = os.path.join(ROOT, 'mt5_interface', 'input_data.json')
-signal_path = os.path.join(ROOT, 'mt5_interface', 'signal.txt')
 
-def preprocess(df):
-    # Exemple simple, à adapter avec tes vrais features
-    df['return'] = df['close'].pct_change().fillna(0)
-    return df[['open', 'high', 'low', 'close', 'volume', 'return']].values[-60:]
+# 1. Try to detect tester path
+tester_path = os.path.expandvars(r"%APPDATA%\MetaQuotes\Tester")
+live_path = os.path.expandvars(r"%APPDATA%\MetaQuotes\Terminal")
 
+# 2. Choix du bon répertoire
+if os.path.exists(tester_path):
+    # Regarde dans les sous-dossiers de tester pour trouver ton agent actif
+    for agent in os.listdir(tester_path):
+        candidate = os.path.join(tester_path, agent, "Agent-127.0.0.1-3000", "MQL5", "Files")
+        if os.path.exists(candidate):
+            base_path = candidate
+            break
+else:
+    # Mode normal/live
+    base_path = os.path.join(live_path, "<TON_ID_TERMINAL>", "MQL5", "Files")
+
+# Accès aux fichiers
+input_path = os.path.join(base_path, "input.json")
+signal_path = os.path.join(base_path, "signal.txt")
 
 def main():
+
     df = pd.read_json(input_path)
     lstm, scaler, xgb = load_models()
 
-    X = preprocess(df)
+    X = preprocess_data(df)
+
     X_scaled = scaler.transform(X)
 
     with torch.no_grad():
