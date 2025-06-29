@@ -12,7 +12,7 @@ from sklearn.utils.class_weight import compute_class_weight
 from exogenous_model.model.core import LSTMClassifier
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-config_path = os.path.join(project_root, 'config.json')
+config_path = os.path.join(project_root, 'config', 'config.json')
 
 # === CONFIGURATION === #
 with open(config_path) as f:
@@ -66,6 +66,7 @@ def train_and_save_model(seed: int, logger ):
     X = data["X"]
     y = data["y"]
     columns = data["columns"]
+    logger.info('Features list : {}'.format(columns))
 
     N, T, F = X.shape
 
@@ -106,7 +107,6 @@ def train_and_save_model(seed: int, logger ):
     # === DataLoader === #
     train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=False)
     val_loader = DataLoader(val_set, batch_size=BATCH_SIZE, shuffle=False)
-    test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = LSTMClassifier(input_dim=F).to(device)
