@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from exogenous_model.dataset.generate_dataset import preprocess_data
+from exogenous_model.dataset.generate_dataset import process_data
 from inference_utils import load_models
 import os
 
@@ -32,9 +32,13 @@ signal_path = os.path.join(base_path, "signal.txt")
 def main():
 
     df = pd.read_json(input_path)
+    df = df.iloc[::-1].reset_index(drop=True)
+    df.set_index('time', drop= True, inplace=True)
+    df.index = pd.to_datetime(df.index)
+
     lstm, scaler, xgb = load_models()
 
-    X = preprocess_data(df)
+    X = process_data(df)
 
     X_scaled = scaler.transform(X)
 

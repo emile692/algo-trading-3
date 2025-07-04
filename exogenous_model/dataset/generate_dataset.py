@@ -9,8 +9,19 @@ from ta.momentum import RSIIndicator, StochasticOscillator, WilliamsRIndicator, 
 from ta.trend import SMAIndicator, EMAIndicator, MACD, ADXIndicator, CCIIndicator
 from ta.volatility import BollingerBands, AverageTrueRange
 from ta.volume import OnBalanceVolumeIndicator, VolumeWeightedAveragePrice
+
+from config.logger.logger import setup_logger
 from exogenous_model.dataset.external_source.evz_loader import download_vix
-from statsmodels.tsa.stattools import adfuller
+
+from exogenous_model.utils.fracdiff import FracDifferentiator
+
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+logger = setup_logger()
+
+config_path = os.path.join(project_root, 'config', 'config.json')
+
+with open(config_path, "r") as f:
+    config = json.load(f)
 
 
 def enrich_with_vix(eurusd_df):
@@ -27,12 +38,11 @@ def set_time_as_index(df):
     return df.set_index('time')
 
 
-def remove_highly_correlated_features(df, threshold=0.95, logger=None):
+def remove_highly_correlated_features(df, threshold=0.95):
     corr_matrix = df.corr().abs()
     upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
     to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
-    if logger:
-        logger.info(f"Colonnes supprimées à cause d'une corrélation > {threshold} : {to_drop}")
+    logger.info(f"Colonnes supprimées à cause d'une corrélation > {threshold} : {to_drop}")
     return df.drop(columns=to_drop), to_drop
 
 
@@ -102,49 +112,35 @@ def generate_label_with_triple_barrier_on_cumsum(
     return labels
 
 
-def generate_exogenous_dataset(logger):
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    config_path = os.path.join(project_root, 'config.json')
-    with open(config_path, "r") as f:
-        config = json.load(f)
-
-    TAKE_PROFIT_PIPS = config['dataset']['take_profit_pips']
-    STOP_LOSS_PIPS = config['dataset']['stop_loss_pips']
-    PREDICTION_WINDOW = config['dataset']['window']
-    SEQUENCE_LENGTH = config['model']['sequence_length']
-
-    logger.info("Chargement des données...")
-    path = kagglehub.dataset_download("orkunaktas/eurusd-1h-2020-2024-september-forex")
-    csv_path = os.path.join(path, 'EURUSD_1H_2020-2024.csv')
-
-    df = pd.read_csv(csv_path)
-    df.dropna(inplace=True)
-    df['time'] = pd.to_datetime(df['time'])
-    df.sort_values('time', inplace=True)
-    df.reset_index(drop=True, inplace=True)
-    df.drop(columns='real_volume', inplace=True)
-    df = set_time_as_index(df)
+def process_data(df : pd.DataFrame) -> pd.DataFrame:
 
     df['log_price'] = np.log(df['close'])
     df['log_return'] = df['log_price'].diff()
 
-    logger.info("Analyse de la stationnarité pour différents d...")
+    if 'd_optimal' in config['model']:
+        d_optimal = config['model']['d_optimal']
+        logger.info(f"d déjà défini dans le config : {d_optimal}")
+        frac = FracDifferentiator(d=d_optimal)
 
-    d_list = [0.2, 0.3, 0.4, 0.5, 0.6]
-    adf_results = []
+    else:
+        logger.info("Recherche automatique du d optimal avec différentiation fractionnaire...")
+        d_list = [0.2, 0.3, 0.4, 0.5, 0.6]
+        frac = FracDifferentiator(d_values=d_list)
+        d_optimal, pval = frac.fit(df['log_price'])
+        logger.info(f"d sélectionné : {d_optimal} (p-value = {pval:.4f})")
+        config['model']['d_optimal'] = d_optimal
 
-    for d_val in d_list:
-        fd_series = frac_diff(df['log_price'], d_val).dropna()
-        result = adfuller(fd_series, autolag='AIC')
-        p_value = result[1]
-        adf_results.append((d_val, p_value))
-        status = "Stationnaire" if p_value < 0.05 else "Non stationnaire"
-        logger.debug(f"d = {d_val:.2f} | p-value = {p_value:.4f} => {status}")
+        # Sauvegarde du config avec le d trouvé
+        with open("config/config.json", "w") as f:
+            json.dump(config, f, indent=4)
 
-    d_optimal = next((d_val for d_val, p in adf_results if p < 0.05), 0.4)
-    logger.info(f"d sélectionné pour la différentiation fractionnaire : {d_optimal}")
+    # Application de la transformation
+    try:
+        df['frac_diff'] = frac.transform(df['log_price'])
+    except ValueError as e:
+        logger.warning(f"FracDiff échouée : {e}")
+        df['frac_diff'] = np.nan
 
-    df['frac_diff'] = frac_diff(df['log_price'], d_optimal)
     df['log_price_cumsum'] = df['frac_diff'].cumsum()
 
     logger.info("Calcul des indicateurs techniques...")
@@ -205,11 +201,21 @@ def generate_exogenous_dataset(logger):
     df['williams_r'] = WilliamsRIndicator(df['high'], df['low'], df['close'], lbp=14).williams_r()
     df['roc'] = ROCIndicator(df['close'], window=12).roc()
     df['kama'] = KAMAIndicator(df['close'], window=10, pow1=2, pow2=30).kama()
-    df['vwap'] = VolumeWeightedAveragePrice(df['high'], df['low'], df['close'], df['tick_volume'], window=14).volume_weighted_average_price()
+    df['vwap'] = VolumeWeightedAveragePrice(df['high'], df['low'], df['close'], df['tick_volume'],
+                                            window=14).volume_weighted_average_price()
     df = enrich_with_vix(df)
 
     logger.info("Nettoyage des données...")
     df.dropna(inplace=True)
+    logger.info("Data et features processées")
+
+    return df
+
+def process_target(df: pd.DataFrame) -> pd.DataFrame:
+
+    TAKE_PROFIT_PIPS = config['dataset']['take_profit_pips']
+    STOP_LOSS_PIPS = config['dataset']['stop_loss_pips']
+    PREDICTION_WINDOW = config['dataset']['window']
 
     logger.info("Génération des labels triple barrière...")
     for w in [4, 8, 12, 24, 48]:
@@ -228,14 +234,35 @@ def generate_exogenous_dataset(logger):
     df_final.to_csv(csv_output_path, index=False)
     logger.info(f"Dataset sauvegardé sous {csv_output_path}")
 
+    return df_final
+
+def generate_exogenous_dataset(logger):
+
+    SEQUENCE_LENGTH = config['model']['sequence_length']
+
+    logger.info("Chargement des données...")
+    path = kagglehub.dataset_download("orkunaktas/eurusd-1h-2020-2024-september-forex")
+    csv_path = os.path.join(path, 'EURUSD_1H_2020-2024.csv')
+
+    df = pd.read_csv(csv_path)
+    df.dropna(inplace=True)
+    df['time'] = pd.to_datetime(df['time'])
+    df.sort_values('time', inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    df.drop(columns='real_volume', inplace=True)
+    df = set_time_as_index(df)
+
+    df_final = process_data(df)
+    df_final_with_target = process_target(df_final)
+
     logger.info("Construction des séquences...")
     sequence_data = []
     sequence_labels = []
-    feature_columns = df_final.columns.drop('label')
+    feature_columns = df_final_with_target.columns.drop('label')
 
-    for i in range(SEQUENCE_LENGTH, len(df_final)):
-        seq = df_final.iloc[i - SEQUENCE_LENGTH:i][feature_columns]
-        label = df_final.iloc[i]['label']
+    for i in range(SEQUENCE_LENGTH, len(df_final_with_target)):
+        seq = df_final_with_target.iloc[i - SEQUENCE_LENGTH:i][feature_columns]
+        label = df_final_with_target.iloc[i]['label']
         sequence_data.append(seq.values)
         sequence_labels.append(label)
 
