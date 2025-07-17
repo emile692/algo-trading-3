@@ -8,9 +8,8 @@ from exogenous_model.model.core import LSTMClassifier  # Assure-toi que ce chemi
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
-def load_models():
+def load_models(best_seed):
 
-    best_seed = 42
     # === Paths === #
     lstm_weights_path = os.path.join(ROOT, 'exogenous_model', 'model', 'checkpoints', f'model_seed_{best_seed}.pt')
     scaler_path = os.path.join(ROOT, 'exogenous_model', 'model', 'checkpoints', f'scaler_seed_{best_seed}.pkl')
@@ -27,6 +26,6 @@ def load_models():
     lstm.eval()
 
     # === Load XGBoost meta-model === #
-    xgb = joblib.load(xgb_path)
+    xgb = joblib.load(xgb_path)['model']
 
     return lstm, scaler, xgb
