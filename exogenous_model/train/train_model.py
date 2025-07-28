@@ -54,60 +54,66 @@ class FocalLoss(nn.Module):
         else:
             return focal_loss
 
-def train_and_save_model(seed: int, logger ):
+def train_and_save_model(seed: int, logger):
 
     torch.manual_seed(seed)
     np.random.seed(seed)
 
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..','..'))
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
-    # === Load and scale data === #
+    # === Load raw data === #
     data = np.load(os.path.join(project_root, config['dataset']["output_Xy_npz_path"]), allow_pickle=True)
-    X = data["X"]
+    X = data["X"]  # shape: (N, T, F)
     y = data["y"]
     columns = data["columns"]
-    logger.info('Features list : {}'.format(columns))
+    logger.info(f"Features list : {columns}")
 
     N, T, F = X.shape
 
+    # === Split raw data first === #
+    indices = np.arange(N)
+    np.random.shuffle(indices)
+
+    n_train = int(N * 0.7)
+    n_val = int(N * 0.15)
+    n_test = N - n_train - n_val
+
+    train_idx = indices[:n_train]
+    val_idx = indices[n_train:n_train + n_val]
+    test_idx = indices[n_train + n_val:]
+
+    X_train_raw, y_train = X[train_idx], y[train_idx]
+    X_val_raw, y_val = X[val_idx], y[val_idx]
+    X_test_raw, y_test = X[test_idx], y[test_idx]
+
+    # === Scale using only train set === #
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X.reshape(-1, F)).reshape(N, T, F)
+    X_train = scaler.fit_transform(X_train_raw.reshape(-1, F)).reshape(-1, T, F)
+    X_val = scaler.transform(X_val_raw.reshape(-1, F)).reshape(-1, T, F)
+    X_test = scaler.transform(X_test_raw.reshape(-1, F)).reshape(-1, T, F)
 
-    # === Split === #
-    dataset = ForexLSTMDataset(X_scaled, y)
-    n_total = len(dataset)
-    n_train = int(n_total * 0.7)
-    n_val = int(n_total * 0.15)
-    n_test = n_total - n_train - n_val
-
-    train_set, val_set, test_set = random_split(dataset, [n_train, n_val, n_test], generator=torch.Generator().manual_seed(seed))
-
-    X_train = X_scaled[train_set.indices]
-    y_train = y[train_set.indices]
-    X_val = X_scaled[val_set.indices]
-    y_val = y[val_set.indices]
-    X_test = X_scaled[test_set.indices]
-    y_test = y[test_set.indices]
-
-    # === Save split === #
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    # === Save the splits === #
     split_prefix = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}')
     os.makedirs(split_prefix, exist_ok=True)
-    np.save(os.path.join(split_prefix,'X_train.npy'), X_train)
-    np.save(os.path.join(split_prefix,'y_train.npy'), y_train)
-    np.save(os.path.join(split_prefix,'X_val.npy'), X_val)
-    np.save(os.path.join(split_prefix,'y_val.npy'), y_val)
-    np.save(os.path.join(split_prefix,'X_test.npy'), X_test)
-    np.save(os.path.join(split_prefix,'y_test.npy'), y_test)
+    np.save(os.path.join(split_prefix, 'X_train.npy'), X_train)
+    np.save(os.path.join(split_prefix, 'y_train.npy'), y_train)
+    np.save(os.path.join(split_prefix, 'X_val.npy'), X_val)
+    np.save(os.path.join(split_prefix, 'y_val.npy'), y_val)
+    np.save(os.path.join(split_prefix, 'X_test.npy'), X_test)
+    np.save(os.path.join(split_prefix, 'y_test.npy'), y_test)
 
-    # === Save raw close prices for test set (non-scaled) === #
-    close_prices_test = X[test_set.indices, -1, 0]  # dernière timestep, première feature (close)
-    np.save(f'{split_prefix}/close_prices.npy', close_prices_test)
+    # === Save raw close prices for test set === #
+    close_prices_test = X_test_raw[:, -1, 0]  # dernière timestep, première feature (close)
+    np.save(os.path.join(split_prefix, 'close_prices.npy'), close_prices_test)
 
-    # === DataLoader === #
+    # === DataLoaders === #
+    train_set = ForexLSTMDataset(X_train, y_train)
+    val_set = ForexLSTMDataset(X_val, y_val)
+
     train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=False)
     val_loader = DataLoader(val_set, batch_size=BATCH_SIZE, shuffle=False)
 
+    # === Model init === #
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = LSTMClassifier(input_dim=F).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
@@ -125,7 +131,7 @@ def train_and_save_model(seed: int, logger ):
 
     for epoch in range(EPOCHS):
         model.train()
-        train_loss = 0
+        train_loss = 0.0
         for X_batch, y_batch in train_loader:
             X_batch, y_batch = X_batch.to(device), y_batch.to(device)
             optimizer.zero_grad()
@@ -135,13 +141,13 @@ def train_and_save_model(seed: int, logger ):
             train_loss += loss.item()
         train_loss /= len(train_loader)
 
-        # Validation
+        # === Validation === #
         model.eval()
-        val_loss = 0
+        val_loss = 0.0
         with torch.no_grad():
-            for X_val_batch, y_val_batch in val_loader:
-                X_val_batch, y_val_batch = X_val_batch.to(device), y_val_batch.to(device)
-                val_loss += criterion(model(X_val_batch), y_val_batch).item()
+            for X_batch, y_batch in val_loader:
+                X_batch, y_batch = X_batch.to(device), y_batch.to(device)
+                val_loss += criterion(model(X_batch), y_batch).item()
         val_loss /= len(val_loader)
 
         if epoch % 5 == 0 or epoch == EPOCHS - 1:
@@ -149,13 +155,12 @@ def train_and_save_model(seed: int, logger ):
                 f"[Epoch {epoch + 1}/{EPOCHS}] "
                 f"Train Loss: {train_loss:.4f} | "
                 f"Val Loss: {val_loss:.4f} | "
-                f"Best Val Loss: {best_val_loss:.4f} | "
+                f"Best Val Loss: {best_val_loss:.4f}"
             )
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            best_model_path = os.path.join(project_root, 'exogenous_model', 'model', 'checkpoints',
-                                           f'model_seed_{seed}.pt')
+            best_model_path = os.path.join(project_root, 'exogenous_model', 'model', 'checkpoints', f'model_seed_{seed}.pt')
             os.makedirs(os.path.dirname(best_model_path), exist_ok=True)
             torch.save(model.state_dict(), best_model_path)
             patience_counter = 0
@@ -165,8 +170,9 @@ def train_and_save_model(seed: int, logger ):
                 logger.info(f"Early stopping at epoch {epoch + 1}")
                 break
 
-    scaler_path = os.path.join(project_root, 'exogenous_model', 'model', 'checkpoints',
-                                   f'scaler_seed_{seed}.pkl')
+    # === Save scaler === #
+    scaler_path = os.path.join(project_root, 'exogenous_model', 'model', 'checkpoints', f'scaler_seed_{seed}.pkl')
     joblib.dump(scaler, scaler_path)
 
     return best_model_path, scaler_path
+
