@@ -39,30 +39,17 @@ def set_time_as_index(df):
 
 
 def remove_highly_correlated_features(df, threshold=0.95):
+    protected_cols = {'open', 'high', 'low', 'close'}  # Colonnes à ne jamais supprimer
+
     corr_matrix = df.corr().abs()
     upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
     to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
-    logger.info(f"Colonnes supprimées à cause d'une corrélation > {threshold} : {to_drop}")
+
+    # Ne pas supprimer les colonnes protégées même si elles sont corrélées
+    to_drop = [col for col in to_drop if col not in protected_cols]
+
+    logger.info(f"Colonnes supprimées à cause d'une corrélation > {threshold} (hors OHLC) : {to_drop}")
     return df.drop(columns=to_drop), to_drop
-
-
-def frac_diff(series, d, thresh=1e-5):
-    w = [1.]
-    for k in range(1, len(series)):
-        w_ = -w[-1] * (d - k + 1) / k
-        if abs(w_) < thresh:
-            break
-        w.append(w_)
-    w = np.array(w[::-1])
-    width = len(w)
-    diff_series = []
-    for i in range(width, len(series)):
-        window = series.iloc[i - width:i]
-        if window.isnull().any():
-            diff_series.append(np.nan)
-        else:
-            diff_series.append(np.dot(w, window))
-    return pd.Series([np.nan] * width + diff_series, index=series.index)
 
 
 def generate_label_with_triple_barrier_on_cumsum(
@@ -112,51 +99,50 @@ def generate_label_with_triple_barrier_on_cumsum(
     return labels
 
 
-def process_data(df : pd.DataFrame) -> pd.DataFrame:
+def process_data(df: pd.DataFrame, seed: int, inference: bool = False) -> pd.DataFrame:
 
     df['log_price'] = np.log(df['close'])
     df['log_return'] = df['log_price'].diff()
 
-    if 'd_optimal' in config['model']:
+    if inference:
+        # Utilise le d déjà défini
         d_optimal = config['model']['d_optimal']
-        logger.info(f"d déjà défini dans le config : {d_optimal}")
+        logger.info(f"[Inférence] Utilisation du d enregistré : {d_optimal}")
         frac = FracDifferentiator(d=d_optimal)
-
     else:
-        logger.info("Recherche automatique du d optimal avec différentiation fractionnaire...")
-        d_list = [0.2, 0.3, 0.4, 0.5, 0.6]
-        frac = FracDifferentiator(d_values=d_list)
-        d_optimal, pval = frac.fit(df['log_price'])
-        logger.info(f"d sélectionné : {d_optimal} (p-value = {pval:.4f})")
-        config['model']['d_optimal'] = d_optimal
+        if 'd_optimal' in config['model']:
+            d_optimal = config['model']['d_optimal']
+            logger.info(f"d déjà défini dans le config : {d_optimal}")
+            frac = FracDifferentiator(d=d_optimal)
+        else:
+            logger.info("Recherche automatique du d optimal avec différentiation fractionnaire...")
+            d_list = [0.2, 0.3, 0.4, 0.5, 0.6]
+            frac = FracDifferentiator(d_values=d_list)
+            d_optimal, pval = frac.fit(df['log_price'])
+            logger.info(f"d sélectionné : {d_optimal} (p-value = {pval:.4f})")
+            config['model']['d_optimal'] = d_optimal
+            with open("config/config.json", "w") as f:
+                json.dump(config, f, indent=4)
 
-        # Sauvegarde du config avec le d trouvé
-        with open("config/config.json", "w") as f:
-            json.dump(config, f, indent=4)
-
-    # Application de la transformation
     try:
         df['frac_diff'] = frac.transform(df['log_price'])
     except ValueError as e:
         logger.warning(f"FracDiff échouée : {e}")
         df['frac_diff'] = np.nan
 
-    df['log_price_cumsum'] = df['frac_diff'].cumsum()
+    df['frac_diff_cumsum'] = df['frac_diff'].cumsum()
 
     logger.info("Calcul des indicateurs techniques...")
-    # Tendances
     df['sma_50'] = SMAIndicator(df['close'], window=50).sma_indicator()
     df['sma_200'] = SMAIndicator(df['close'], window=200).sma_indicator()
     df['ema_20'] = EMAIndicator(df['close'], window=20).ema_indicator()
     df['ema_100'] = EMAIndicator(df['close'], window=100).ema_indicator()
 
-    # RSI
     df['rsi'] = RSIIndicator(df['close'], window=14).rsi()
     df['rsi_dist_oversold'] = df['rsi'] - 30
     df['rsi_dist_overbought'] = 70 - df['rsi']
     df['rsi_signal'] = ((df['rsi'] > 70) | (df['rsi'] < 30)).astype(int)
 
-    # Bollinger
     bb = BollingerBands(df['close'], window=20, window_dev=2)
     df['bb_upper'] = bb.bollinger_hband()
     df['bb_lower'] = bb.bollinger_lband()
@@ -164,54 +150,71 @@ def process_data(df : pd.DataFrame) -> pd.DataFrame:
     df['bb_dist_lower'] = df['close'] - df['bb_lower']
     df['bb_width'] = df['bb_upper'] - df['bb_lower']
 
-    # Moyennes
     df['above_sma_50'] = (df['close'] > df['sma_50']).astype(int)
     df['above_sma_200'] = (df['close'] > df['sma_200']).astype(int)
     df['sma_50_vs_200'] = (df['sma_50'] > df['sma_200']).astype(int)
 
-    # MACD
     macd = MACD(df['close'])
     df['macd'] = macd.macd()
-    # df['macd_signal'] = macd.macd_signal()
     df['macd_diff'] = macd.macd_diff()
 
-    # Stochastique
     stoch = StochasticOscillator(df['high'], df['low'], df['close'])
     df['stoch_k'] = stoch.stoch()
     df['stoch_d'] = stoch.stoch_signal()
 
-    # OBV
-    obv = OnBalanceVolumeIndicator(df['close'], df['tick_volume'])
+    obv = OnBalanceVolumeIndicator(df['close'], df['volume'])
     df['obv'] = obv.on_balance_volume()
 
-    # Features dérivées du prix
     df['price_diff_1'] = df['close'].diff()
     df['price_diff_2'] = df['price_diff_1'].diff()
 
-    # Autocorrélation
     returns = df['close'].pct_change()
     df['autocorr_return_1'] = returns.rolling(10).apply(lambda x: x.autocorr(lag=1), raw=False)
     df['autocorr_return_5'] = returns.rolling(20).apply(lambda x: x.autocorr(lag=5), raw=False)
     df['autocorr_price_5'] = df['close'].rolling(20).apply(lambda x: x.autocorr(lag=5), raw=False)
 
-    # Indicateurs Quantreo
     df['atr'] = AverageTrueRange(df['high'], df['low'], df['close'], window=14).average_true_range()
     df['adx'] = ADXIndicator(df['high'], df['low'], df['close'], window=14).adx()
     df['cci'] = CCIIndicator(df['high'], df['low'], df['close'], window=20).cci()
     df['williams_r'] = WilliamsRIndicator(df['high'], df['low'], df['close'], lbp=14).williams_r()
     df['roc'] = ROCIndicator(df['close'], window=12).roc()
     df['kama'] = KAMAIndicator(df['close'], window=10, pow1=2, pow2=30).kama()
-    df['vwap'] = VolumeWeightedAveragePrice(df['high'], df['low'], df['close'], df['tick_volume'],
-                                            window=14).volume_weighted_average_price()
+    df['vwap'] = VolumeWeightedAveragePrice(df['high'], df['low'], df['close'], df['volume'], window=14).volume_weighted_average_price()
+
     df = enrich_with_vix(df)
 
     logger.info("Nettoyage des données...")
     df.dropna(inplace=True)
-    logger.info("Data et features processées")
 
+    if inference:
+        logger.info("Mode inférence : application des colonnes de l'entraînement")
+        features_path = os.path.join(project_root,'exogenous_model', 'model', 'checkpoints', f'features_used_seed_{seed}.txt')
+
+        if not os.path.exists(features_path):
+            raise FileNotFoundError(f"Fichier des features manquant : {features_path}")
+
+        with open(features_path, 'r') as f:
+            expected_columns = [line.strip() for line in f.readlines()]
+
+        missing_cols = [col for col in expected_columns if col not in df.columns]
+        if missing_cols:
+            raise ValueError(f"Colonnes manquantes dans le DataFrame d'inférence : {missing_cols}")
+
+        df = df.reindex(columns=expected_columns)
+    else:
+        df, _ = remove_highly_correlated_features(df, threshold=0.95)
+        features_path = os.path.join(project_root,'exogenous_model', 'model', 'checkpoints', f'features_used_seed_{seed}.txt')
+        os.makedirs(os.path.dirname(features_path), exist_ok=True)
+        with open(features_path, 'w') as f:
+            for col in df.columns:
+                f.write(f"{col}\n")
+        logger.info("Features du modèle conservée")
+
+    logger.info("Data et features processées")
     return df
 
-def process_target(df: pd.DataFrame) -> pd.DataFrame:
+
+def process_target(df: pd.DataFrame, seed :int) -> pd.DataFrame:
 
     TAKE_PROFIT_PIPS = config['dataset']['take_profit_pips']
     STOP_LOSS_PIPS = config['dataset']['stop_loss_pips']
@@ -226,19 +229,17 @@ def process_target(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"PREDICTION_WINDOW sélectionnée : {PREDICTION_WINDOW}")
     df['label'] = generate_label_with_triple_barrier_on_cumsum(df, TAKE_PROFIT_PIPS, STOP_LOSS_PIPS, PREDICTION_WINDOW)
 
-    features = [col for col in df.columns if col not in ['label', 'time', 'log_price', 'log_price_cumsum']]
-    df_final, _ = remove_highly_correlated_features(df[features + ['label']], threshold=0.95, logger=logger)
+    features = [col for col in df.columns if col not in ['label', 'time', 'log_price', 'frac_diff_cumsum']]
+    df_final = df[features + ['label']]
 
-    csv_output_path = os.path.join(project_root, config['dataset']['output_dataset_path'])
+    csv_output_path = os.path.join(project_root, "exogenous_model","dataset","features_and_target", f'seed_{seed}','features_and_target.csv')
     os.makedirs(os.path.dirname(csv_output_path), exist_ok=True)
     df_final.to_csv(csv_output_path, index=False)
     logger.info(f"Dataset sauvegardé sous {csv_output_path}")
 
     return df_final
 
-def generate_exogenous_dataset(logger):
-
-    SEQUENCE_LENGTH = config['model']['sequence_length']
+def generate_exogenous_dataset(seed):
 
     logger.info("Chargement des données...")
     path = kagglehub.dataset_download("orkunaktas/eurusd-1h-2020-2024-september-forex")
@@ -249,27 +250,13 @@ def generate_exogenous_dataset(logger):
     df['time'] = pd.to_datetime(df['time'])
     df.sort_values('time', inplace=True)
     df.reset_index(drop=True, inplace=True)
-    df.drop(columns='real_volume', inplace=True)
+    df.drop(columns=['real_volume','spread'], inplace=True)
+    df = df.rename(columns={'tick_volume':'volume'})
     df = set_time_as_index(df)
 
-    df_final = process_data(df)
-    df_final_with_target = process_target(df_final)
+    df_final = process_data(df, seed, False)
+    process_target(df_final, seed)
 
-    logger.info("Construction des séquences...")
-    sequence_data = []
-    sequence_labels = []
-    feature_columns = df_final_with_target.columns.drop('label')
 
-    for i in range(SEQUENCE_LENGTH, len(df_final_with_target)):
-        seq = df_final_with_target.iloc[i - SEQUENCE_LENGTH:i][feature_columns]
-        label = df_final_with_target.iloc[i]['label']
-        sequence_data.append(seq.values)
-        sequence_labels.append(label)
-
-    X = np.array(sequence_data)
-    y = np.array(sequence_labels)
-
-    npz_output_path = os.path.join(project_root, config['dataset']['output_Xy_npz_path'])
-    np.savez_compressed(npz_output_path, X=X, y=y, columns=feature_columns.to_list())
-    logger.info(f"Dataset séquentiel sauvegardé sous {npz_output_path} avec noms de colonnes")
-
+if __name__ == "__main__":
+    generate_exogenous_dataset(42)

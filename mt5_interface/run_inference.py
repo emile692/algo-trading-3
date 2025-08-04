@@ -31,14 +31,16 @@ signal_path = os.path.join(base_path, "signal.txt")
 
 def main():
 
+    best_seed = 42
+
     df = pd.read_json(input_path)
     df = df.iloc[::-1].reset_index(drop=True)
     df.set_index('time', drop= True, inplace=True)
     df.index = pd.to_datetime(df.index)
 
-    lstm, scaler, xgb = load_models()
+    lstm, scaler, xgb = load_models(best_seed)
 
-    X = process_data(df)
+    X = process_data(df, best_seed, True)
 
     X_scaled = scaler.transform(X)
 
@@ -47,7 +49,8 @@ def main():
         lstm_out = lstm(X_tensor).numpy().flatten()
 
     meta_input = np.concatenate([X_scaled[-1], lstm_out])
-    signal = xgb.predict([meta_input])[0]
+    meta_input = meta_input.reshape(1, -1)
+    signal = xgb.predict(meta_input)[0]
 
     with open(signal_path, 'w') as f:
         f.write(signal)

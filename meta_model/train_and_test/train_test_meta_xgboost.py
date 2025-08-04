@@ -19,10 +19,6 @@ def train_and_test_meta_xgboost(seed, logger):
                                      f"meta_dataset_seed_{seed}.csv")
     df = pd.read_csv(meta_dataset_path)
 
-    # === Target : prédiction correcte ou non ===
-    df["meta_label"] = df["y_true"] == df["y_pred"]
-    df["meta_label"] = df["meta_label"].astype(int)
-
     # Analyse du déséquilibre de classes
     class_dist = df["meta_label"].value_counts(normalize=True)
     logger.info(
@@ -49,7 +45,7 @@ def train_and_test_meta_xgboost(seed, logger):
      y_true_train, y_true_test,
      y_pred_train, y_pred_test) = train_test_split(
         X, y, sample_weights, y_true_full, y_pred_full,
-        stratify=y, test_size=0.2, random_state=42
+        stratify=y, test_size=0.2, random_state=seed
     )
 
     # === Validation croisée pour l'optimisation du seuil ===
@@ -57,7 +53,7 @@ def train_and_test_meta_xgboost(seed, logger):
     thresholds = []
     best_threshold = 0.5
 
-    skf = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+    skf = StratifiedKFold(n_splits=3, shuffle=True, random_state=seed)
     for fold, (train_idx, val_idx) in enumerate(skf.split(X_train, y_train)):
         # Réinitialiser le modèle pour chaque fold
         fold_model = XGBClassifier(
@@ -68,7 +64,7 @@ def train_and_test_meta_xgboost(seed, logger):
             colsample_bytree=0.8,
             eval_metric="auc",
             early_stopping_rounds=50,
-            random_state=42 + fold,  # Différentes graines
+            random_state=seed,  # Différentes graines
         )
 
         X_fold_train, X_fold_val = X_train.iloc[train_idx], X_train.iloc[val_idx]
@@ -100,13 +96,13 @@ def train_and_test_meta_xgboost(seed, logger):
         learning_rate=0.05,
         subsample=0.8,
         colsample_bytree=0.8,
-        random_state=42,
+        random_state=seed,
     )
 
     final_model.fit(X_train, y_train, sample_weight=sw_train)
 
     logger.info("Calibration du modèle...")
-    calibrated_model = CalibratedClassifierCV(final_model, method='isotonic', cv='prefit')
+    calibrated_model = CalibratedClassifierCV(final_model, method='isotonic')
     calibrated_model.fit(X_train, y_train)
 
     # === Évaluation avec seuil optimisé ===
@@ -187,7 +183,6 @@ def train_and_test_meta_xgboost(seed, logger):
     np.save(os.path.join(results_dir, 'xgboost_meta_model_X_test.npy'), X_test.values)
 
     # Paramètres du modèle
-    # Paramètres du modèle
     with open(os.path.join(results_dir, 'model_params.json'), 'w') as f:
         json.dump({
             'optimal_threshold': float(best_threshold),
@@ -209,3 +204,9 @@ def train_and_test_meta_xgboost(seed, logger):
         'meta_class_dist_1': float(class_dist[1]),
         'meta_f1_score': float(class1_metrics['f1-score'])
     }
+
+
+if __name__ == "__main__":
+
+    from exogenous_model.dataset.generate_dataset import logger
+    train_and_test_meta_xgboost(42, logger)

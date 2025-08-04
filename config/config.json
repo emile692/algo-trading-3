@@ -1,8 +1,7 @@
 {
     "general": {
         "seeds": [
-            42,
-            2043
+            42
         ]
     },
     "model": {
@@ -23,7 +22,6 @@
         "window": 24,
         "take_profit_pips": 20,
         "stop_loss_pips": 7,
-        "output_dataset_path": "exogenous_model\\dataset\\features_and_target\\features_and_target.csv",
-        "output_Xy_npz_path": "exogenous_model\\dataset\\features_and_target\\sequential_dataset.npz"
+        "output_dataset_path": "exogenous_model\\dataset\\features_and_target\\features_and_target.csv"
     }
 }

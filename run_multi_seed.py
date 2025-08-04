@@ -19,7 +19,6 @@ def set_seed(seed: int):
     random.seed(seed)
 
 
-
 def run_multi_seed():
     # Logger
     logger = setup_logger()
@@ -27,9 +26,6 @@ def run_multi_seed():
     # Configuration
     with open('config/config.json') as f:
         config = json.load(f)
-
-    logger.info(f"Génération de l'exogenous dataset")
-    generate_exogenous_dataset(logger)
 
     seeds = config['general']['seeds']
 
@@ -42,6 +38,9 @@ def run_multi_seed():
 
         try:
             set_seed(seed)
+
+            logger.info(f"Génération de l'exogenous dataset")
+            generate_exogenous_dataset(seed)
 
             # Entraînement
             logger.info("Entraînement du modèle principal")
