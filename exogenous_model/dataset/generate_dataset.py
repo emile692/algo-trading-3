@@ -214,7 +214,7 @@ def process_data(df: pd.DataFrame, seed: int, inference: bool = False) -> pd.Dat
     return df
 
 
-def process_target(df: pd.DataFrame, seed :int) -> pd.DataFrame:
+def process_target(df: pd.DataFrame) -> pd.DataFrame:
 
     TAKE_PROFIT_PIPS = config['dataset']['take_profit_pips']
     STOP_LOSS_PIPS = config['dataset']['stop_loss_pips']
@@ -232,12 +232,92 @@ def process_target(df: pd.DataFrame, seed :int) -> pd.DataFrame:
     features = [col for col in df.columns if col not in ['label', 'time', 'log_price', 'frac_diff_cumsum']]
     df_final = df[features + ['label']]
 
-    csv_output_path = os.path.join(project_root, "exogenous_model","dataset","features_and_target", f'seed_{seed}','features_and_target.csv')
-    os.makedirs(os.path.dirname(csv_output_path), exist_ok=True)
-    df_final.to_csv(csv_output_path, index=False)
-    logger.info(f"Dataset sauvegardé sous {csv_output_path}")
-
     return df_final
+
+def save_processed_dataframe(df: pd.DataFrame, split_name: str, seed: int):
+    """
+    Sauvegarde les données brutes (non séquencées) pour le méta-modèle au format CSV.
+
+    Args:
+        df (pd.DataFrame): Données brutes avec features + colonne 'label'
+        split_name (str): 'train', 'val' ou 'test'
+        seed (int): Seed pour la structure des dossiers
+    """
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    split_dir = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}')
+    os.makedirs(split_dir, exist_ok=True)
+
+    # On sauvegarde uniquement les colonnes utiles (features + label)
+    raw_path = os.path.join(split_dir, f'df_{split_name}_processed.csv')
+    df.to_csv(raw_path, index=False)
+
+    return raw_path
+
+
+def process_split_compute_target_and_save(df: pd.DataFrame, seed: int):
+
+    df_train, df_val, df_test = purge_train_test_split(
+        df,
+        train_ratio=0.7,
+        val_ratio=0.15,
+        max_dependency=0
+    )
+
+    train_processed = process_data(df_train, seed, False)
+    val_processed = process_data(df_val, seed, False)
+    test_processed = process_data(df_test, seed, False)
+
+    train_processed_with_target = process_target(train_processed)
+    val_processed_with_target = process_target(val_processed)
+    test_processed_with_target = process_target(test_processed)
+
+    # === 3. Sauvegarde brute pour méta-modèle (non séquencée) === #
+    save_processed_dataframe(train_processed, 'train', seed)
+    save_processed_dataframe(val_processed, 'val', seed)
+    test_raw_path = save_processed_dataframe(test_processed, 'test', seed)
+    logger.info(f"Données brutes test sauvegardées sous: {test_raw_path}")
+
+    return train_processed_with_target, val_processed_with_target, test_processed_with_target
+
+def purge_train_test_split(df, train_ratio=0.7, val_ratio=0.15, max_dependency=0):
+    """
+    Split le dataset en entraînement/validation/test en purgeant les données pour éviter le leakage.
+
+    Args:
+        df (pd.DataFrame): Données à splitter.
+        train_ratio (float): Proportion pour l'entraînement (par défaut 70%).
+        val_ratio (float): Proportion pour la validation (par défaut 15%).
+        max_dependency (int): Longueur maximale de dépendance temporelle (ex: horizon de prédiction).
+                             Si >0, applique un embargo pour éviter le look-ahead.
+
+    Returns:
+        df_train, df_val, df_test (pd.DataFrame): Ensembles purgés.
+    """
+    n = len(df)
+    n_train = int(n * train_ratio)
+    n_val = int(n * val_ratio)
+
+    # === Split initial === #
+    train_end = n_train
+    val_end = train_end + n_val
+
+    # === Purge si dépendance temporelle === #
+    if max_dependency > 0:
+        # On retire `max_dependency` points avant/après chaque split
+        train_end_purged = train_end - max_dependency
+        val_end_purged = val_end - max_dependency
+
+        df_train = df.iloc[:train_end_purged].reset_index(drop=True)
+        df_val = df.iloc[train_end:val_end_purged].reset_index(drop=True)
+        df_test = df.iloc[val_end:].reset_index(drop=True)
+    else:
+        # Split classique (pas de purge)
+        df_train = df.iloc[:train_end].reset_index(drop=True)
+        df_val = df.iloc[train_end:val_end].reset_index(drop=True)
+        df_test = df.iloc[val_end:].reset_index(drop=True)
+
+    return df_train, df_val, df_test
+
 
 def generate_exogenous_dataset(seed):
 
@@ -254,8 +334,9 @@ def generate_exogenous_dataset(seed):
     df = df.rename(columns={'tick_volume':'volume'})
     df = set_time_as_index(df)
 
-    df_final = process_data(df, seed, False)
-    process_target(df_final, seed)
+    train_processed, val_processed, test_processed = process_split_compute_target_and_save(df, seed)
+
+    logger.info(f"Taille train: {len(train_processed)}, val: {len(val_processed)}, test: {len(test_processed)}")
 
 
 if __name__ == "__main__":

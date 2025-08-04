@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import joblib
 
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.class_weight import compute_class_weight
 from exogenous_model.model.core import LSTMClassifier
@@ -58,27 +58,6 @@ class FocalLoss(nn.Module):
             return focal_loss
 
 
-def save_raw_dataframe_for_meta_model(df: pd.DataFrame, split_name: str, seed: int):
-    """
-    Sauvegarde les données brutes (non séquencées) pour le méta-modèle au format CSV.
-
-    Args:
-        df (pd.DataFrame): Données brutes avec features + colonne 'label'
-        split_name (str): 'train', 'val' ou 'test'
-        seed (int): Seed pour la structure des dossiers
-    """
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    split_dir = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}')
-    os.makedirs(split_dir, exist_ok=True)
-
-    # On sauvegarde uniquement les colonnes utiles (features + label)
-    raw_path = os.path.join(split_dir, f'{split_name}_raw.csv')
-    df.to_csv(raw_path, index=False)
-
-    return raw_path
-
-
-
 def create_sequences(df: pd.DataFrame, sequence_length: int, label_col: str = 'label'):
     """
     Transforme un DataFrame en données séquentielles (X, y) pour l'entraînement d'un modèle.
@@ -111,43 +90,34 @@ def create_sequences(df: pd.DataFrame, sequence_length: int, label_col: str = 'l
 
 
 def train_and_save_model(seed: int, logger):
+
     torch.manual_seed(seed)
     np.random.seed(seed)
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
-    # === 1. Charger le DataFrame final avec les labels === #
-    df_final_path = os.path.join(project_root, 'exogenous_model', 'dataset', 'features_and_target', f'seed_{seed}', f'features_and_target.csv')
-    df = pd.read_csv(df_final_path)
+    # === 1. Charger les DataFrame finaux avec les labels === #
+    df_train_path = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}', f'df_train_processed.csv')
+    df_val_path = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}', f'df_val_processed.csv')
+    df_test_path = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}', f'df_test_processed.csv')
 
-    # === 2. Split brut (avant scaling / séquençage) === #
-    n = len(df)
-    n_train = int(n * 0.7)
-    n_val = int(n * 0.15)
-
-    df_train = df.iloc[:n_train].reset_index(drop=True)
-    df_val = df.iloc[n_train:n_train+n_val].reset_index(drop=True)
-    df_test = df.iloc[n_train+n_val:].reset_index(drop=True)
-
-    # === 3. Sauvegarde brute pour méta-modèle (non séquencée) === #
-    save_raw_dataframe_for_meta_model(df_train, 'train', seed)
-    save_raw_dataframe_for_meta_model(df_val, 'val', seed)
-    test_raw_path = save_raw_dataframe_for_meta_model(df_test, 'test', seed)
-    logger.info(f"Données brutes test sauvegardées sous: {test_raw_path}")
+    train_processed = pd.read_csv(df_train_path)
+    val_processed = pd.read_csv(df_val_path)
+    test_processed = pd.read_csv(df_test_path)
 
     # === 4. Scaling (fit uniquement sur train) === #
     feature_cols = df.columns.drop('label')
     scaler = StandardScaler()
-    scaler.fit(df_train[feature_cols])
+    scaler.fit(train_processed[feature_cols])
 
-    df_train[feature_cols] = scaler.transform(df_train[feature_cols])
-    df_val[feature_cols] = scaler.transform(df_val[feature_cols])
-    df_test[feature_cols] = scaler.transform(df_test[feature_cols])
+    train_processed[feature_cols] = scaler.transform(train_processed[feature_cols])
+    val_processed[feature_cols] = scaler.transform(val_processed[feature_cols])
+    test_processed[feature_cols] = scaler.transform(test_processed[feature_cols])
 
     # === 5. Séquençage === #
-    X_train, y_train, _ = create_sequences(df_train, SEQUENCE_LENGTH)
-    X_val, y_val, _ = create_sequences(df_val, SEQUENCE_LENGTH)
-    X_test, y_test, _ = create_sequences(df_test, SEQUENCE_LENGTH)
+    X_train, y_train, _ = create_sequences(train_processed, SEQUENCE_LENGTH)
+    X_val, y_val, _ = create_sequences(val_processed, SEQUENCE_LENGTH)
+    X_test, y_test, _ = create_sequences(test_processed, SEQUENCE_LENGTH)
 
     # === 6. Sauvegarde des splits === #
     split_prefix = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}')
