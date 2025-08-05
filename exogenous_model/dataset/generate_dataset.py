@@ -39,7 +39,7 @@ def set_time_as_index(df):
 
 
 def remove_highly_correlated_features(df, threshold=0.95):
-    protected_cols = {'open', 'high', 'low', 'close'}  # Colonnes à ne jamais supprimer
+    protected_cols = {'open', 'high', 'low', 'close', 'frac_diff'}  # Colonnes à ne jamais supprimer
 
     corr_matrix = df.corr().abs()
     upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
@@ -52,7 +52,7 @@ def remove_highly_correlated_features(df, threshold=0.95):
     return df.drop(columns=to_drop), to_drop
 
 
-def generate_label_with_triple_barrier_on_cumsum(
+def generate_label_with_triple_barrier_on_frac_diff_cumsum(
     df: pd.DataFrame,
     tp_pips: float,
     sl_pips: float,
@@ -63,11 +63,10 @@ def generate_label_with_triple_barrier_on_cumsum(
     tp_threshold = tp_pips * 0.0001
     sl_threshold = sl_pips * 0.0001
 
-    log_returns = df['log_return'].values
-
     for i in range(len(df) - window):
+
         # chemin local de prix centré à 0
-        future_returns = log_returns[i + 1 : i + 1 + window]
+        future_returns = df['frac_diff'].values[i + 1 : i + 1 + window]
         local_path = np.cumsum(future_returns)
 
         # barrières long
@@ -95,17 +94,18 @@ def generate_label_with_triple_barrier_on_cumsum(
         labels.append(label)
 
     # Padding pour aligner la taille
-    labels += [0] * window
+    labels = [np.nan] * window + labels
     return labels
 
 
-def process_data(df: pd.DataFrame, seed: int, inference: bool = False) -> pd.DataFrame:
+def process_data(df_entry: pd.DataFrame, seed: int, inference: bool = False, split_type: str = "train") -> pd.DataFrame:
+    df = df_entry.copy()
 
     df['log_price'] = np.log(df['close'])
     df['log_return'] = df['log_price'].diff()
 
+    # === Fractional Differencing ===
     if inference:
-        # Utilise le d déjà défini
         d_optimal = config['model']['d_optimal']
         logger.info(f"[Inférence] Utilisation du d enregistré : {d_optimal}")
         frac = FracDifferentiator(d=d_optimal)
@@ -130,8 +130,7 @@ def process_data(df: pd.DataFrame, seed: int, inference: bool = False) -> pd.Dat
         logger.warning(f"FracDiff échouée : {e}")
         df['frac_diff'] = np.nan
 
-    df['frac_diff_cumsum'] = df['frac_diff'].cumsum()
-
+    # === Technical Indicators ===
     logger.info("Calcul des indicateurs techniques...")
     df['sma_50'] = SMAIndicator(df['close'], window=50).sma_indicator()
     df['sma_200'] = SMAIndicator(df['close'], window=200).sma_indicator()
@@ -186,9 +185,13 @@ def process_data(df: pd.DataFrame, seed: int, inference: bool = False) -> pd.Dat
     logger.info("Nettoyage des données...")
     df.dropna(inplace=True)
 
+    # === Gestion des features conservées ===
+    features_dir = os.path.join(project_root, 'exogenous_model', 'model', 'checkpoints')
+    features_path = os.path.join(features_dir, f'features_used_seed_{seed}.txt')
+    dropped_path = os.path.join(features_dir, f'dropped_cols_seed_{seed}.txt')
+
     if inference:
         logger.info("Mode inférence : application des colonnes de l'entraînement")
-        features_path = os.path.join(project_root,'exogenous_model', 'model', 'checkpoints', f'features_used_seed_{seed}.txt')
 
         if not os.path.exists(features_path):
             raise FileNotFoundError(f"Fichier des features manquant : {features_path}")
@@ -201,17 +204,34 @@ def process_data(df: pd.DataFrame, seed: int, inference: bool = False) -> pd.Dat
             raise ValueError(f"Colonnes manquantes dans le DataFrame d'inférence : {missing_cols}")
 
         df = df.reindex(columns=expected_columns)
-    else:
-        df, _ = remove_highly_correlated_features(df, threshold=0.95)
-        features_path = os.path.join(project_root,'exogenous_model', 'model', 'checkpoints', f'features_used_seed_{seed}.txt')
-        os.makedirs(os.path.dirname(features_path), exist_ok=True)
+
+    elif split_type == "train":
+        df, dropped_cols = remove_highly_correlated_features(df, threshold=0.95)
+
+        os.makedirs(features_dir, exist_ok=True)
+
         with open(features_path, 'w') as f:
             for col in df.columns:
                 f.write(f"{col}\n")
-        logger.info("Features du modèle conservée")
+        with open(dropped_path, 'w') as f:
+            for col in dropped_cols:
+                f.write(f"{col}\n")
+
+        logger.info("Features du modèle conservées (train split)")
+
+    else:  # val ou test
+        if not os.path.exists(dropped_path):
+            raise FileNotFoundError(f"Fichier des colonnes supprimées manquant : {dropped_path}")
+
+        with open(dropped_path, 'r') as f:
+            dropped_cols = [line.strip() for line in f.readlines()]
+
+        df = df.drop(columns=dropped_cols, errors='ignore')
+        logger.info(f"Colonnes supprimées pour split {split_type} : {dropped_cols}")
 
     logger.info("Data et features processées")
     return df
+
 
 
 def process_target(df: pd.DataFrame) -> pd.DataFrame:
@@ -222,17 +242,18 @@ def process_target(df: pd.DataFrame) -> pd.DataFrame:
 
     logger.info("Génération des labels triple barrière...")
     for w in [4, 8, 12, 24, 48]:
-        labels = generate_label_with_triple_barrier_on_cumsum(df, TAKE_PROFIT_PIPS, STOP_LOSS_PIPS, w)
+        labels = generate_label_with_triple_barrier_on_frac_diff_cumsum(df, TAKE_PROFIT_PIPS, STOP_LOSS_PIPS, w)
         counter = pd.Series(labels).value_counts(normalize=True)
         logger.debug(f"Window: {w}h - Distribution des labels: {counter.to_dict()}")
 
     logger.info(f"PREDICTION_WINDOW sélectionnée : {PREDICTION_WINDOW}")
-    df['label'] = generate_label_with_triple_barrier_on_cumsum(df, TAKE_PROFIT_PIPS, STOP_LOSS_PIPS, PREDICTION_WINDOW)
+    df['label'] = generate_label_with_triple_barrier_on_frac_diff_cumsum(df, TAKE_PROFIT_PIPS, STOP_LOSS_PIPS, PREDICTION_WINDOW)
 
-    features = [col for col in df.columns if col not in ['label', 'time', 'log_price', 'frac_diff_cumsum']]
+    features = [col for col in df.columns if col not in ['label', 'time', 'log_price']]
     df_final = df[features + ['label']]
 
     return df_final
+
 
 def save_processed_dataframe(df: pd.DataFrame, split_name: str, seed: int):
     """
@@ -263,9 +284,9 @@ def process_split_compute_target_and_save(df: pd.DataFrame, seed: int):
         max_dependency=0
     )
 
-    train_processed = process_data(df_train, seed, False)
-    val_processed = process_data(df_val, seed, False)
-    test_processed = process_data(df_test, seed, False)
+    train_processed = process_data(df_train, seed, False, 'train')
+    val_processed = process_data(df_val, seed, False, 'val')
+    test_processed = process_data(df_test, seed, False, 'test')
 
     train_processed_with_target = process_target(train_processed)
     val_processed_with_target = process_target(val_processed)
@@ -279,6 +300,7 @@ def process_split_compute_target_and_save(df: pd.DataFrame, seed: int):
 
     return train_processed_with_target, val_processed_with_target, test_processed_with_target
 
+
 def purge_train_test_split(df, train_ratio=0.7, val_ratio=0.15, max_dependency=0):
     """
     Split le dataset en entraînement/validation/test en purgeant les données pour éviter le leakage.
@@ -291,33 +313,30 @@ def purge_train_test_split(df, train_ratio=0.7, val_ratio=0.15, max_dependency=0
                              Si >0, applique un embargo pour éviter le look-ahead.
 
     Returns:
-        df_train, df_val, df_test (pd.DataFrame): Ensembles purgés.
+        df_train, df_val, df_test (pd.DataFrame): Ensembles purgés, index conservé.
     """
     n = len(df)
     n_train = int(n * train_ratio)
     n_val = int(n * val_ratio)
 
-    # === Split initial === #
     train_end = n_train
     val_end = train_end + n_val
 
-    # === Purge si dépendance temporelle === #
     if max_dependency > 0:
-        # On retire `max_dependency` points avant/après chaque split
         train_end_purged = train_end - max_dependency
+        val_start_purged = train_end + max_dependency
         val_end_purged = val_end - max_dependency
+        test_start = val_end + max_dependency
 
-        df_train = df.iloc[:train_end_purged].reset_index(drop=True)
-        df_val = df.iloc[train_end:val_end_purged].reset_index(drop=True)
-        df_test = df.iloc[val_end:].reset_index(drop=True)
+        df_train = df.iloc[:train_end_purged]
+        df_val = df.iloc[val_start_purged:val_end_purged]
+        df_test = df.iloc[test_start:]
     else:
-        # Split classique (pas de purge)
-        df_train = df.iloc[:train_end].reset_index(drop=True)
-        df_val = df.iloc[train_end:val_end].reset_index(drop=True)
-        df_test = df.iloc[val_end:].reset_index(drop=True)
+        df_train = df.iloc[:train_end]
+        df_val = df.iloc[train_end:val_end]
+        df_test = df.iloc[val_end:]
 
     return df_train, df_val, df_test
-
 
 def generate_exogenous_dataset(seed):
 
