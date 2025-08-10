@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.stattools import adfuller
 
+
 class FracDifferentiator:
     def __init__(self, d=None, d_values=None, thresh=1e-5):
         """
@@ -15,46 +16,63 @@ class FracDifferentiator:
         self.weights = None
         self.width = None
 
-    def _compute_weights(self, d, size):
-        w = [1.]
-        for k in range(1, size):
-            w_ = -w[-1] * (d - k + 1) / k
-            if abs(w_) < self.thresh:
+    def get_ffd_weights(self, d):
+        """Calcule les poids pour la différenciation fractionnaire à fenêtre fixe"""
+        weights = [1.0]
+        k = 1
+        while True:
+            weight = -weights[-1] * (d - k + 1) / k
+            if abs(weight) < self.thresh:
                 break
-            w.append(w_)
-        return np.array(w[::-1])
+            weights.append(weight)
+            k += 1
+        return np.array(weights[::-1])
 
-    def _frac_diff(self, series, weights):
-        width = len(weights)
+    def frac_diff_ffd(self, series, d):
+        """Différenciation fractionnaire avec fenêtre fixe (FFD)"""
+        weights = self.get_ffd_weights(d)
+        window_size = len(weights)
         diff_series = []
-        for i in range(width, len(series)):
-            window = series.iloc[i - width:i]
+
+        for i in range(window_size, len(series)):
+            window = series.iloc[i - window_size:i]
             if window.isnull().any():
                 diff_series.append(np.nan)
             else:
-                diff_series.append(np.dot(weights, window))
-        return pd.Series([np.nan] * width + diff_series, index=series.index)
+                diff_value = np.dot(weights, window)
+                diff_series.append(diff_value)
 
-    def find_optimal_d(self, series: pd.Series, pvalue_threshold=0.05):
+        return pd.Series(diff_series, index=series.index[window_size:])
+
+    def find_optimal_d(self, series: pd.Series, pvalue_threshold: float = 0.05, max_weights=1000) -> tuple:
         """
-        Calcule et choisit le meilleur d pour rendre la série stationnaire (ADF test)
+        Retourne le plus petit `d` qui rend la série stationnaire.
+        Limite la taille de la fenêtre des poids.
         """
-        for d in self.d_values:
-            weights = self._compute_weights(d, len(series))
-            transformed = self._frac_diff(series, weights).dropna()
+        for d in sorted(self.d_values):  # d croissants, du plus petit au plus grand
+            weights = self.get_ffd_weights(d)
+            if len(weights) > max_weights:
+                continue  # ignore d trop petit avec trop de poids
+
+            transformed = self.frac_diff_ffd(series, d).dropna()
             if len(transformed) < 20:
                 continue
-            pval = adfuller(transformed, maxlag=1, regression='c', autolag=None)[1]
+
+            pval = adfuller(transformed, regression='c', autolag='AIC')[1]
+
             if pval < pvalue_threshold:
                 self.d = d
                 self.weights = weights
                 self.width = len(weights)
                 return d, pval
-        # Par défaut, si rien n'est stationnaire
-        self.d = self.d_values[0]
-        self.weights = self._compute_weights(self.d, len(series))
-        self.width = len(self.weights)
-        return self.d, None
+
+        # fallback
+        d = self.d_values[-1]
+        weights = self.get_ffd_weights(d)
+        self.d = d
+        self.weights = weights
+        self.width = len(weights)
+        return d, None
 
     def fit(self, series: pd.Series):
         """
@@ -65,14 +83,23 @@ class FracDifferentiator:
     def transform(self, series: pd.Series) -> pd.Series:
         """
         Applique la frac diff avec d et les poids existants (en inférence ou après fit)
+        Utilise la méthode FFD
         """
+        if self.d is None:
+            raise ValueError("You must fit or set d before calling transform.")
+
         if self.weights is None:
-            if self.d is None:
-                raise ValueError("You must fit or set d before calling transform.")
-            self.weights = self._compute_weights(self.d, len(series))
+            self.weights = self.get_ffd_weights(self.d)
             self.width = len(self.weights)
 
-        if len(series) < self.width:
-            raise ValueError(f"Not enough data for fractional differencing. Required: {self.width}, got: {len(series)}.")
+        window_size = len(self.weights)
+        diff_series = []
 
-        return self._frac_diff(series, self.weights)
+        for i in range(window_size, len(series)):
+            window = series.iloc[i - window_size:i]
+            if window.isnull().any():
+                diff_series.append(np.nan)
+            else:
+                diff_series.append(np.dot(self.weights, window))
+
+        return pd.Series(diff_series, index=series.index[window_size:])
