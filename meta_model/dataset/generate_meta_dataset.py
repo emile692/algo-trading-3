@@ -123,7 +123,7 @@ def generate_meta_dataset(seed, logger):
     y_test = np.load(os.path.join(base_path, 'y_test.npy'))
 
     # Charger les données brutes correspondantes
-    raw_test_path = os.path.join(base_path, 'test_raw.csv')
+    raw_test_path = os.path.join(base_path, 'df_test_processed.csv')
     if not os.path.exists(raw_test_path):
         logger.error("Fichier de données brutes test_raw.csv manquant")
         raise FileNotFoundError(f"{raw_test_path} n'existe pas")

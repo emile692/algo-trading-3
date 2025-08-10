@@ -3,16 +3,14 @@ import pandas as pd
 import numpy as np
 import kagglehub
 import json
-from typing import List
+from statsmodels.tsa.stattools import adfuller
 
 from ta.momentum import RSIIndicator, StochasticOscillator, WilliamsRIndicator, ROCIndicator, KAMAIndicator
 from ta.trend import SMAIndicator, EMAIndicator, MACD, ADXIndicator, CCIIndicator
 from ta.volatility import BollingerBands, AverageTrueRange
 from ta.volume import OnBalanceVolumeIndicator, VolumeWeightedAveragePrice
-
 from config.logger.logger import setup_logger
 from exogenous_model.dataset.external_source.evz_loader import download_vix
-
 from exogenous_model.utils.fracdiff import FracDifferentiator
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -56,53 +54,98 @@ def generate_label_with_triple_barrier_on_frac_diff_cumsum(
     df: pd.DataFrame,
     tp_pips: float,
     sl_pips: float,
+    pips_value: float,
     window: int
-) -> List[int]:
+) -> list[int]:
+    """
+    Labels triple barrière (0 neutre, 1 long, 2 short) inspirés de López de Prado.
+
+    - df['close'] : prix de clôture
+    - df['frac_diff'] : rendements fractionnés (log-returns fractionnés)
+    - tp_pips, sl_pips : seuils en pips (1 pip = 0.0001 pour EURUSD)
+    """
     labels = []
 
-    tp_threshold = tp_pips * 0.0001
-    sl_threshold = sl_pips * 0.0001
-
     for i in range(len(df) - window):
+        # Point d'entrée
+        entry_price = df['close'].iloc[i]
 
-        # chemin local de prix centré à 0
-        future_returns = df['frac_diff'].values[i + 1 : i + 1 + window]
-        local_path = np.cumsum(future_returns)
+        # Chemin des rendements cumulés (en log-returns)
+        future_returns = df['frac_diff'].iloc[i+1 : i+1+window]
+        cum_returns = np.cumsum(future_returns)
 
-        # barrières long
-        upper_barrier_long = tp_threshold
-        lower_barrier_long = -sl_threshold
+        # Conversion TP/SL en termes de log-return
+        tp_return = np.log(1 + (tp_pips * pips_value) / entry_price)
+        sl_return = -np.log(1 + (sl_pips * pips_value) / entry_price)
 
-        # barrières short
-        upper_barrier_short = -tp_threshold
-        lower_barrier_short = sl_threshold
+        # Trouver le premier moment où on touche une barrière
+        hit_tp = next((j for j, r in enumerate(cum_returns) if r >= tp_return), None)
+        hit_sl = next((j for j, r in enumerate(cum_returns) if r <= sl_return), None)
 
-        # logiques de touch
-        long_tp_hit = next((j for j, p in enumerate(local_path) if p >= upper_barrier_long), None)
-        long_sl_hit = next((j for j, p in enumerate(local_path) if p <= lower_barrier_long), None)
-
-        short_tp_hit = next((j for j, p in enumerate(local_path) if p <= upper_barrier_short), None)
-        short_sl_hit = next((j for j, p in enumerate(local_path) if p >= lower_barrier_short), None)
-
-        if long_tp_hit is not None and (long_sl_hit is None or long_tp_hit < long_sl_hit):
+        if hit_tp is not None and (hit_sl is None or hit_tp < hit_sl):
             label = 1  # long
-        elif short_tp_hit is not None and (short_sl_hit is None or short_tp_hit < short_sl_hit):
+        elif hit_sl is not None and (hit_tp is None or hit_sl < hit_tp):
             label = 2  # short
         else:
             label = 0  # neutre
 
         labels.append(label)
 
-    # Padding pour aligner la taille
+    # Padding de tête pour aligner les indices
     labels = [np.nan] * window + labels
     return labels
 
 
-def process_data(df_entry: pd.DataFrame, seed: int, inference: bool = False, split_type: str = "train") -> pd.DataFrame:
+def select_best_prediction_window(df, tp_pips, sl_pips, pips_size, candidate_windows, seed):
+    """
+    Évalue chaque fenêtre candidate sur le jeu fourni (train) en calculant
+    l'entropie de la distribution des labels. Retourne la fenêtre qui maximise l'entropie.
+    Sauvegarde aussi la fenêtre choisie dans les checkpoints et dans config.json.
+    """
+    results = {}
+    for w in candidate_windows:
+        labels = generate_label_with_triple_barrier_on_frac_diff_cumsum(df, tp_pips, sl_pips, pips_size, w)
+        s = pd.Series(labels).dropna()
+        if len(s) == 0:
+            entropy = -np.inf
+            dist = {}
+        else:
+            probs = s.value_counts(normalize=True)
+            ps = probs.values
+            entropy = -np.sum(ps * np.log(ps + 1e-12))  # entropie (base e)
+            dist = probs.to_dict()
+        results[w] = {'entropy': entropy, 'dist': dist, 'n_samples': int(len(s))}
+
+    # choisir la fenêtre avec entropie maximale
+    best_window = max(results.items(), key=lambda x: x[1]['entropy'])[0]
+
+    # sauvegarder choix (fichier seed-specific)
+    features_dir = os.path.join(project_root, 'exogenous_model', 'model', 'checkpoints')
+    os.makedirs(features_dir, exist_ok=True)
+    pred_window_path = os.path.join(features_dir, f'prediction_window_seed_{seed}.txt')
+    with open(pred_window_path, 'w') as f:
+        f.write(str(best_window))
+
+    # mettre à jour config et sauvegarder proprement (utilise config_path défini en haut du fichier)
+    config.setdefault('dataset', {})['window'] = int(best_window)
+    with open(config_path, 'w') as f:
+        json.dump(config, f, indent=4)
+
+    logger.info(f"Fenêtre sélectionnée (seed={seed}) : {best_window}. Sauvegardée dans {pred_window_path} et config.")
+    logger.debug(f"Détails sélection fenêtre: {results[best_window]}")
+
+    return best_window, results
+
+
+def process_data(df_entry: pd.DataFrame, seed: int, inference: bool = False,
+                 split_type: str = "train") -> pd.DataFrame:
     df = df_entry.copy()
 
+    # 1. Log-price
     df['log_price'] = np.log(df['close'])
-    df['log_return'] = df['log_price'].diff()
+
+    # 2. (Optionnel) centrer la série
+    series_to_diff = df['log_price'] - df['log_price'].mean()
 
     # === Fractional Differencing ===
     if inference:
@@ -116,19 +159,32 @@ def process_data(df_entry: pd.DataFrame, seed: int, inference: bool = False, spl
             frac = FracDifferentiator(d=d_optimal)
         else:
             logger.info("Recherche automatique du d optimal avec différentiation fractionnaire...")
-            d_list = [0.2, 0.3, 0.4, 0.5, 0.6]
-            frac = FracDifferentiator(d_values=d_list)
-            d_optimal, pval = frac.fit(df['log_price'])
+            frac = FracDifferentiator(thresh=1e-5)
+            d_optimal, pval = frac.fit(series_to_diff)
             logger.info(f"d sélectionné : {d_optimal} (p-value = {pval:.4f})")
             config['model']['d_optimal'] = d_optimal
-            with open("config/config.json", "w") as f:
+
+            with open(config_path, "w") as f:
                 json.dump(config, f, indent=4)
 
     try:
-        df['frac_diff'] = frac.transform(df['log_price'])
+        # Nettoyage et application FFD
+        clean_series = series_to_diff.ffill().bfill()
+        df['frac_diff'] = frac.transform(clean_series)
+
+        # Vérification de la stationnarité
+        adf_result = adfuller(df['frac_diff'].dropna(), maxlag=1, regression='c', autolag=None)
+        logger.info(f"ADF après FFD: Stat={adf_result[0]:.4f}, p-value={adf_result[1]:.4f}")
+
+        # Statistiques descriptives
+        logger.info(f"Stats frac_diff: Moy={df['frac_diff'].mean():.6f}, Méd={df['frac_diff'].median():.6f}, "
+                    f"%Pos={100 * (df['frac_diff'] > 0).mean():.2f}%")
+
     except ValueError as e:
         logger.warning(f"FracDiff échouée : {e}")
         df['frac_diff'] = np.nan
+
+    df['frac_diff'].plot(title='EURUSD frac_diff')
 
     # === Technical Indicators ===
     logger.info("Calcul des indicateurs techniques...")
@@ -234,25 +290,30 @@ def process_data(df_entry: pd.DataFrame, seed: int, inference: bool = False, spl
 
 
 
-def process_target(df: pd.DataFrame) -> pd.DataFrame:
-
+def process_target(df: pd.DataFrame, prediction_window: int, split_name : str) -> pd.DataFrame:
+    """
+    Génère la colonne 'label' pour df en utilisant prediction_window choisi sur le train.
+    """
     TAKE_PROFIT_PIPS = config['dataset']['take_profit_pips']
     STOP_LOSS_PIPS = config['dataset']['stop_loss_pips']
-    PREDICTION_WINDOW = config['dataset']['window']
+    PIPS_SIZE = config['dataset']['pips_size']
 
-    logger.info("Génération des labels triple barrière...")
-    for w in [4, 8, 12, 24, 48]:
-        labels = generate_label_with_triple_barrier_on_frac_diff_cumsum(df, TAKE_PROFIT_PIPS, STOP_LOSS_PIPS, w)
-        counter = pd.Series(labels).value_counts(normalize=True)
-        logger.debug(f"Window: {w}h - Distribution des labels: {counter.to_dict()}")
+    logger.info(f"Utilisation de PREDICTION_WINDOW={prediction_window} pour les labels du jeu {split_name}.")
+    df['label'] = generate_label_with_triple_barrier_on_frac_diff_cumsum(
+        df,
+        TAKE_PROFIT_PIPS,
+        STOP_LOSS_PIPS,
+        PIPS_SIZE,
+        prediction_window
+    )
 
-    logger.info(f"PREDICTION_WINDOW sélectionnée : {PREDICTION_WINDOW}")
-    df['label'] = generate_label_with_triple_barrier_on_frac_diff_cumsum(df, TAKE_PROFIT_PIPS, STOP_LOSS_PIPS, PREDICTION_WINDOW)
+    label_distribution = df['label'].value_counts(normalize=True).mul(100).round(2)
+    logger.info(f"Distribution des labels ({split_name}):\n{label_distribution.to_string()}")
+    logger.info(f"Nombre total d'échantillons: {len(df)}")
 
     features = [col for col in df.columns if col not in ['label', 'time', 'log_price']]
-    df_final = df[features + ['label']]
+    return df[features + ['label']]
 
-    return df_final
 
 
 def save_processed_dataframe(df: pd.DataFrame, split_name: str, seed: int):
@@ -276,7 +337,10 @@ def save_processed_dataframe(df: pd.DataFrame, split_name: str, seed: int):
 
 
 def process_split_compute_target_and_save(df: pd.DataFrame, seed: int):
-
+    """
+    Split -> process_data -> sélectionner la PREDICTION_WINDOW sur le train -> générer labels
+    et sauvegarder les fichiers bruts (non séquencés).
+    """
     df_train, df_val, df_test = purge_train_test_split(
         df,
         train_ratio=0.7,
@@ -284,15 +348,26 @@ def process_split_compute_target_and_save(df: pd.DataFrame, seed: int):
         max_dependency=0
     )
 
+    # process features (columns) pour chaque split
     train_processed = process_data(df_train, seed, False, 'train')
     val_processed = process_data(df_val, seed, False, 'val')
     test_processed = process_data(df_test, seed, False, 'test')
 
-    train_processed_with_target = process_target(train_processed)
-    val_processed_with_target = process_target(val_processed)
-    test_processed_with_target = process_target(test_processed)
+    # --- Sélection de la fenêtre sur le train uniquement ---
+    candidate_windows = [4, 8, 12, 24, 48]
+    best_window, window_results = select_best_prediction_window(train_processed,
+                                                                config['dataset']['take_profit_pips'],
+                                                                config['dataset']['stop_loss_pips'],
+                                                                config['dataset']['pips_size'],
+                                                                candidate_windows,
+                                                                seed)
 
-    # === 3. Sauvegarde brute pour méta-modèle (non séquencée) === #
+    # Appliquer la même fenêtre à train/val/test
+    train_processed_with_target = process_target(train_processed, prediction_window=best_window, split_name='train')
+    val_processed_with_target = process_target(val_processed, prediction_window=best_window, split_name='val')
+    test_processed_with_target = process_target(test_processed, prediction_window=best_window, split_name='test')
+
+    # Sauvegarde brute pour méta-modèle (non séquencée)
     save_processed_dataframe(train_processed, 'train', seed)
     save_processed_dataframe(val_processed, 'val', seed)
     test_raw_path = save_processed_dataframe(test_processed, 'test', seed)
@@ -338,6 +413,7 @@ def purge_train_test_split(df, train_ratio=0.7, val_ratio=0.15, max_dependency=0
 
     return df_train, df_val, df_test
 
+
 def generate_exogenous_dataset(seed):
 
     logger.info("Chargement des données...")
@@ -352,6 +428,7 @@ def generate_exogenous_dataset(seed):
     df.drop(columns=['real_volume','spread'], inplace=True)
     df = df.rename(columns={'tick_volume':'volume'})
     df = set_time_as_index(df)
+    df['close'].plot(title='EURUSD close')
 
     train_processed, val_processed, test_processed = process_split_compute_target_and_save(df, seed)
 
