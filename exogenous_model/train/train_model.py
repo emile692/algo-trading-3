@@ -106,7 +106,7 @@ def train_and_save_model(seed: int, logger):
     test_processed = pd.read_csv(df_test_path)
 
     # === 4. Scaling (fit uniquement sur train) === #
-    feature_cols = df.columns.drop('label')
+    feature_cols = train_processed.columns.drop('label')
     scaler = StandardScaler()
     scaler.fit(train_processed[feature_cols])
 
@@ -128,10 +128,6 @@ def train_and_save_model(seed: int, logger):
     np.save(os.path.join(split_prefix, 'y_val.npy'), y_val)
     np.save(os.path.join(split_prefix, 'X_test.npy'), X_test)
     np.save(os.path.join(split_prefix, 'y_test.npy'), y_test)
-
-    # Sauvegarde de la feature "close" au dernier timestep pour analyse
-    close_prices_test = X_test[:, -1, 0]  # Dernier pas de temps, 1ère colonne = 'close'
-    np.save(os.path.join(split_prefix, 'close_prices.npy'), close_prices_test)
 
     # === 7. Préparation des DataLoaders === #
     train_loader = DataLoader(ForexLSTMDataset(X_train, y_train), batch_size=BATCH_SIZE, shuffle=True)
