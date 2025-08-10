@@ -10,7 +10,7 @@
         "learning_rate": 0.001,
         "patience": 10,
         "sequence_length": 200,
-        "d_optimal": 0.2
+        "d_optimal": 0.5
     },
     "meta_model": {
         "batch_size": 64,
@@ -19,9 +19,10 @@
         "patience": 10
     },
     "dataset": {
-        "window": 24,
-        "take_profit_pips": 20,
-        "stop_loss_pips": 7,
-        "output_dataset_path": "exogenous_model\\dataset\\features_and_target\\features_and_target.csv"
+        "take_profit_pips": 60,
+        "stop_loss_pips": 60,
+        "output_dataset_path": "exogenous_model\\dataset\\features_and_target\\features_and_target.csv",
+        "window": 8,
+        "pips_size": 0.0001
     }
 }
