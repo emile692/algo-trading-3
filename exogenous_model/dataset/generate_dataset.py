@@ -417,15 +417,15 @@ def purge_train_test_split(df, train_ratio=0.7, val_ratio=0.15, max_dependency=0
 def generate_exogenous_dataset(seed):
 
     logger.info("Chargement des données...")
-    path = kagglehub.dataset_download("orkunaktas/eurusd-1h-2020-2024-september-forex")
-    csv_path = os.path.join(path, 'EURUSD_1H_2020-2024.csv')
+    # path = kagglehub.dataset_download("orkunaktas/eurusd-1h-2020-2024-september-forex")
+    csv_path = os.path.join(project_root, 'exogenous_model','dataset','external_source','EURUSD_H1.csv')
 
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(csv_path, sep='\t', skipinitialspace=True)
     df.dropna(inplace=True)
     df['time'] = pd.to_datetime(df['time'])
     df.sort_values('time', inplace=True)
     df.reset_index(drop=True, inplace=True)
-    df.drop(columns=['real_volume','spread'], inplace=True)
+    df.drop(columns=['spread'], inplace=True)
     df = df.rename(columns={'tick_volume':'volume'})
     df = set_time_as_index(df)
     df['close'].plot(title='EURUSD close')
