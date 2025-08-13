@@ -331,7 +331,7 @@ def save_processed_dataframe(df: pd.DataFrame, split_name: str, seed: int):
 
     # On sauvegarde uniquement les colonnes utiles (features + label)
     raw_path = os.path.join(split_dir, f'df_{split_name}_processed.csv')
-    df.to_csv(raw_path, index=False)
+    df.to_csv(raw_path, index=True)
 
     return raw_path
 

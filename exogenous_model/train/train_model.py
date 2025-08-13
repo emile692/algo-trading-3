@@ -58,35 +58,47 @@ class FocalLoss(nn.Module):
             return focal_loss
 
 
-def create_sequences(df: pd.DataFrame, sequence_length: int, label_col: str = 'label'):
+def create_sequences(
+    df: pd.DataFrame,
+    sequence_length: int,
+    label_col: str = 'label',
+    time_col: str = 'time'
+):
     """
-    Transforme un DataFrame en données séquentielles (X, y) pour l'entraînement d'un modèle.
+    Transforme un DataFrame en données séquentielles (X, y, times) pour l'entraînement d'un modèle.
 
     Args:
-        df (pd.DataFrame): DataFrame contenant les features + une colonne de label.
+        df (pd.DataFrame): DataFrame contenant les features + une colonne de label et une colonne time.
         sequence_length (int): Longueur des séquences à générer.
         label_col (str): Nom de la colonne cible.
+        time_col (str): Nom de la colonne contenant les timestamps.
 
     Returns:
         X (np.ndarray): Données séquentielles de forme (n_samples, sequence_length, n_features).
         y (np.ndarray): Labels associés de forme (n_samples,).
+        times (np.ndarray): Timestamps associés à chaque y.
         feature_columns (list): Liste des colonnes utilisées comme features.
     """
     sequence_data = []
     sequence_labels = []
+    sequence_times = []
 
-    feature_columns = df.columns.drop(label_col)
+    feature_columns = df.columns.drop([label_col, time_col])
 
     for i in range(sequence_length, len(df)):
         seq = df.iloc[i - sequence_length:i][feature_columns]
         label = df.iloc[i][label_col]
+        time_val = df.iloc[i][time_col]  # timestamp du label
+
         sequence_data.append(seq.values)
         sequence_labels.append(label)
+        sequence_times.append(time_val)
 
     X = np.array(sequence_data)
     y = np.array(sequence_labels)
+    times = np.array(sequence_times)
 
-    return X, y, feature_columns.to_list()
+    return X, y, times, feature_columns.to_list()
 
 
 def train_and_save_model(seed: int, logger):
@@ -106,7 +118,14 @@ def train_and_save_model(seed: int, logger):
     test_processed = pd.read_csv(df_test_path)
 
     # === 4. Scaling (fit uniquement sur train) === #
-    feature_cols = train_processed.columns.drop('label')
+    feature_cols = train_processed.columns.drop(['label','time'])
+
+    # On stocke les colonnes 'time' pour chaque split
+    time_train = train_processed['time'].values
+    time_val = val_processed['time'].values
+    time_test = test_processed['time'].values
+
+    #On scale
     scaler = StandardScaler()
     scaler.fit(train_processed[feature_cols])
 
@@ -115,19 +134,25 @@ def train_and_save_model(seed: int, logger):
     test_processed[feature_cols] = scaler.transform(test_processed[feature_cols])
 
     # === 5. Séquençage === #
-    X_train, y_train, _ = create_sequences(train_processed, SEQUENCE_LENGTH)
-    X_val, y_val, _ = create_sequences(val_processed, SEQUENCE_LENGTH)
-    X_test, y_test, _ = create_sequences(test_processed, SEQUENCE_LENGTH)
+    X_train, y_train, time_train_seq, _ = create_sequences(train_processed, SEQUENCE_LENGTH)
+    X_val, y_val, time_val_seq, _ = create_sequences(val_processed, SEQUENCE_LENGTH)
+    X_test, y_test, time_test_seq, _ = create_sequences(test_processed, SEQUENCE_LENGTH)
 
     # === 6. Sauvegarde des splits === #
     split_prefix = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}')
     os.makedirs(split_prefix, exist_ok=True)
+
     np.save(os.path.join(split_prefix, 'X_train.npy'), X_train)
     np.save(os.path.join(split_prefix, 'y_train.npy'), y_train)
+    np.save(os.path.join(split_prefix, 'time_train.npy'), time_train_seq)
+
     np.save(os.path.join(split_prefix, 'X_val.npy'), X_val)
     np.save(os.path.join(split_prefix, 'y_val.npy'), y_val)
+    np.save(os.path.join(split_prefix, 'time_val.npy'), time_val_seq)
+
     np.save(os.path.join(split_prefix, 'X_test.npy'), X_test)
     np.save(os.path.join(split_prefix, 'y_test.npy'), y_test)
+    np.save(os.path.join(split_prefix, 'time_test.npy'), time_test_seq)
 
     # === 7. Préparation des DataLoaders === #
     train_loader = DataLoader(ForexLSTMDataset(X_train, y_train), batch_size=BATCH_SIZE, shuffle=True)

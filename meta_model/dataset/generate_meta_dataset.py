@@ -121,6 +121,7 @@ def generate_meta_dataset(seed, logger):
     # Charger les données test
     X_test = np.load(os.path.join(base_path, 'X_test.npy'))
     y_test = np.load(os.path.join(base_path, 'y_test.npy'))
+    time_test = np.load(os.path.join(base_path, 'time_test.npy'))
 
     # Charger les données brutes correspondantes
     raw_test_path = os.path.join(base_path, 'df_test_processed.csv')
@@ -132,7 +133,7 @@ def generate_meta_dataset(seed, logger):
     logger.info(f"Données de test brutes chargées : {df_raw_test.shape[0]} points")
 
     df_raw_aligned = df_raw_test.iloc[SEQUENCE_LENGTH:].copy()
-    df_raw_aligned = df_raw_aligned[['open','high','low','close', 'volume','vix']]
+    df_raw_aligned = df_raw_aligned[['time','open','high','low','close', 'volume','vix']]
     logger.info(f"Données de test brutes alignées et nettoyées : {df_raw_test.shape[0]} points")
 
     model = LSTMClassifier(input_dim=X_test.shape[2]).to(device)

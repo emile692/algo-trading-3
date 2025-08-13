@@ -55,8 +55,10 @@ def train_and_test_meta_xgboost(seed, logger):
     )
     sample_weights = pd.Series(class_weights, index=df.index)
 
+    time_full = df["time"].to_numpy()
+
     # === Séparation X / y ===
-    drop_cols = ["y_true", "y_pred", "meta_label"]
+    drop_cols = ["y_true", "y_pred", "meta_label", "time"]
     X = df.drop(columns=drop_cols)
     y = df["meta_label"]
     y_true_full = df["y_true"].to_numpy()
@@ -67,8 +69,9 @@ def train_and_test_meta_xgboost(seed, logger):
      y_train, y_test,
      sw_train, sw_test,
      y_true_train, y_true_test,
-     y_pred_train, y_pred_exo_test) = train_test_split(
-        X, y, sample_weights, y_true_full, y_pred_full,
+     y_pred_train, y_pred_exo_test,
+     time_train, time_test) = train_test_split(
+        X, y, sample_weights, y_true_full, y_pred_full, time_full,
         stratify=y, test_size=0.2, random_state=seed
     )
 
@@ -241,6 +244,7 @@ def train_and_test_meta_xgboost(seed, logger):
     np.save(os.path.join(results_dir, 'exo_model_y_pred.npy'), y_pred_exo_test)
     np.save(os.path.join(results_dir, 'xgboost_meta_model_y_pred.npy'), y_pred_labels)
     np.save(os.path.join(results_dir, 'xgboost_meta_model_X_test.npy'), X_test.values)
+    np.save(os.path.join(results_dir, 'xgboost_meta_model_time_test.npy'), time_test)
 
     # Paramètres du modèle
     with open(os.path.join(results_dir, 'model_params.json'), 'w') as f:
