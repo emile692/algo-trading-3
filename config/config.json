@@ -22,7 +22,7 @@
         "take_profit_pips": 60,
         "stop_loss_pips": 60,
         "output_dataset_path": "exogenous_model\\dataset\\features_and_target\\features_and_target.csv",
-        "window": 8,
-        "pips_size": 0.0001
+        "pips_size": 0.0001,
+        "window": 4
     }
 }

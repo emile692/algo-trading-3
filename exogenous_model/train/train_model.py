@@ -102,45 +102,54 @@ def create_sequences(
 
 
 def train_and_save_model(seed: int, logger):
+    logger.info(f"=== Début de l'entraînement avec seed {seed} ===")
 
     torch.manual_seed(seed)
     np.random.seed(seed)
+    logger.debug("Seeds PyTorch et NumPy initialisés")
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    logger.debug(f"Racine du projet: {project_root}")
 
     # === 1. Charger les DataFrame finaux avec les labels === #
-    df_train_path = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}', f'df_train_processed.csv')
-    df_val_path = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}', f'df_val_processed.csv')
-    df_test_path = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}', f'df_test_processed.csv')
+    logger.info("Chargement des données d'entraînement, validation et test...")
+    df_train_path = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}',
+                                 f'df_train_processed.csv')
+    df_val_path = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}',
+                               f'df_val_processed.csv')
+    df_test_path = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}',
+                                f'df_test_processed.csv')
 
     train_processed = pd.read_csv(df_train_path)
     val_processed = pd.read_csv(df_val_path)
     test_processed = pd.read_csv(df_test_path)
+    logger.info(
+        f"Données chargées - Train: {len(train_processed)} | Val: {len(val_processed)} | Test: {len(test_processed)}")
 
     # === 4. Scaling (fit uniquement sur train) === #
-    feature_cols = train_processed.columns.drop(['label','time'])
+    feature_cols = train_processed.columns.drop(['label', 'time'])
+    logger.debug(f"Colonnes features: {feature_cols.tolist()}")
 
-    # On stocke les colonnes 'time' pour chaque split
-    time_train = train_processed['time'].values
-    time_val = val_processed['time'].values
-    time_test = test_processed['time'].values
-
-    #On scale
+    logger.info("Normalisation des données avec StandardScaler...")
     scaler = StandardScaler()
     scaler.fit(train_processed[feature_cols])
 
     train_processed[feature_cols] = scaler.transform(train_processed[feature_cols])
     val_processed[feature_cols] = scaler.transform(val_processed[feature_cols])
     test_processed[feature_cols] = scaler.transform(test_processed[feature_cols])
+    logger.info("Normalisation terminée")
 
     # === 5. Séquençage === #
+    logger.info(f"Création des séquences (longueur: {SEQUENCE_LENGTH})...")
     X_train, y_train, time_train_seq, _ = create_sequences(train_processed, SEQUENCE_LENGTH)
     X_val, y_val, time_val_seq, _ = create_sequences(val_processed, SEQUENCE_LENGTH)
     X_test, y_test, time_test_seq, _ = create_sequences(test_processed, SEQUENCE_LENGTH)
+    logger.info(f"Séquences créées - X_train: {X_train.shape} | X_val: {X_val.shape} | X_test: {X_test.shape}")
 
     # === 6. Sauvegarde des splits === #
     split_prefix = os.path.join(project_root, 'exogenous_model', 'dataset', 'splits', f'seed_{seed}')
     os.makedirs(split_prefix, exist_ok=True)
+    logger.info(f"Sauvegarde des séquences dans {split_prefix}...")
 
     np.save(os.path.join(split_prefix, 'X_train.npy'), X_train)
     np.save(os.path.join(split_prefix, 'y_train.npy'), y_train)
@@ -153,22 +162,30 @@ def train_and_save_model(seed: int, logger):
     np.save(os.path.join(split_prefix, 'X_test.npy'), X_test)
     np.save(os.path.join(split_prefix, 'y_test.npy'), y_test)
     np.save(os.path.join(split_prefix, 'time_test.npy'), time_test_seq)
+    logger.info("Sauvegarde des séquences terminée")
 
     # === 7. Préparation des DataLoaders === #
+    logger.info(f"Préparation des DataLoaders (batch_size={BATCH_SIZE})...")
     train_loader = DataLoader(ForexLSTMDataset(X_train, y_train), batch_size=BATCH_SIZE, shuffle=True)
     val_loader = DataLoader(ForexLSTMDataset(X_val, y_val), batch_size=BATCH_SIZE, shuffle=False)
+    logger.info(f"DataLoaders créés - Train batches: {len(train_loader)} | Val batches: {len(val_loader)}")
 
     # === 8. Entraînement du modèle === #
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logger.info(f"Utilisation du device: {device}")
+
     model = LSTMClassifier(input_dim=X_train.shape[2]).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+    logger.info(f"Modèle initialisé - Architecture: {model}")
 
     class_weights_np = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
     class_weights = torch.tensor(class_weights_np, dtype=torch.float32).to(device)
     criterion = FocalLoss(alpha=class_weights)
+    logger.info(f"Poids des classes calculés: {class_weights_np}")
 
     best_val_loss = float('inf')
     patience_counter = 0
+    logger.info(f"Début de l'entraînement pour {EPOCHS} epochs (patience={PATIENCE})...")
 
     for epoch in range(EPOCHS):
         model.train()
@@ -199,20 +216,26 @@ def train_and_save_model(seed: int, logger):
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            best_model_path = os.path.join(project_root, 'exogenous_model', 'model', 'checkpoints', f'model_seed_{seed}.pt')
+            best_model_path = os.path.join(project_root, 'exogenous_model', 'model', 'checkpoints',
+                                           f'model_seed_{seed}.pt')
             os.makedirs(os.path.dirname(best_model_path), exist_ok=True)
             torch.save(model.state_dict(), best_model_path)
             patience_counter = 0
+            logger.debug(f"Nouveau meilleur modèle sauvegardé à {best_model_path}")
         else:
             patience_counter += 1
             if patience_counter >= PATIENCE:
-                logger.info(f"Early stopping at epoch {epoch + 1}")
+                logger.info(f"Early stopping à l'epoch {epoch + 1}")
                 break
+
+    logger.info(f"Entraînement terminé - Meilleure val_loss: {best_val_loss:.4f}")
 
     # === 9. Sauvegarde du scaler === #
     scaler_path = os.path.join(project_root, 'exogenous_model', 'model', 'checkpoints', f'scaler_seed_{seed}.pkl')
     joblib.dump(scaler, scaler_path)
+    logger.info(f"Scaler sauvegardé à {scaler_path}")
 
+    logger.info(f"=== Fin de l'entraînement avec seed {seed} ===")
     return best_model_path, scaler_path
 
 

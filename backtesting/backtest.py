@@ -22,6 +22,7 @@ def run_backtest_triple_barrier(
     seed: int,
     y_proba_meta_path: str,
     y_pred_exo_path: str,
+    time_pred_meta_path: str,
     meta_model_path: str,
     df_test_raw_exo_path: str,
     capital: float = 10000.0,
@@ -59,21 +60,18 @@ def run_backtest_triple_barrier(
     y_pred = np.load(y_pred_exo_path).astype(int)    # 0/1/2
     y_proba_meta = np.load(y_proba_meta_path)       # prob classe 0 (erreur)
     df_test_raw = pd.read_csv(df_test_raw_exo_path)
-    close_prices = df_test_raw['close']
-    open_prices = df_test_raw['open']
-    high_prices = df_test_raw['high']
-    low_prices = df_test_raw['low']
+    time_test = np.load(time_pred_meta_path, allow_pickle=True)
+    df_test_raw.set_index('time', inplace=True)
+    close_prices = df_test_raw.loc[time_test,'close']
+    open_prices = df_test_raw.loc[time_test,'open']
+    high_prices = df_test_raw.loc[time_test,'high']
+    low_prices = df_test_raw.loc[time_test,'low']
 
     model_data = joblib.load(meta_model_path)
     threshold = model_data.get('threshold', 0.5)
 
-    # align lengths
-    n = min(len(y_pred), len(y_proba_meta), len(close_prices))
-    y_pred = y_pred[:n]
-    y_proba_meta = y_proba_meta[:n]
-    close_prices = close_prices[:n]
-
     # stockage
+    n = len(y_pred)
     trades = []  # dicts: entry_idx, exit_idx, entry_price, exit_price, direction, return, exit_type
     returns_time = np.zeros(n-1, dtype=float)  # per-step returns (0 when no trade open at that step)
     in_cooldown_until = -1
@@ -110,29 +108,45 @@ def run_backtest_triple_barrier(
         exit_type = 'time'  # default
 
         # parcourir la fenêtre pour détecter TP/SL sur les closes (approx.)
+        # parcourir la fenêtre pour détecter TP/SL avec OHLC
         for h in range(1, PREDICTION_WINDOW + 1):
-            cur_price = float(close_prices[entry_idx + h])
+
+            bar_high = float(high_prices[entry_idx + h])
+            bar_low = float(low_prices[entry_idx + h])
 
             if entry_direction == 'long':
-                if cur_price >= tp_price:
+                # SL touché si low <= sl_price avant que high >= tp_price
+                if bar_low <= sl_price and bar_high >= tp_price:
+                    # ordre d'atteinte impossible à déterminer sans intrabar -> on sort par SL par prudence
                     exit_idx = entry_idx + h
-                    exit_price = cur_price
-                    exit_type = 'tp'
-                    break
-                if cur_price <= sl_price:
-                    exit_idx = entry_idx + h
-                    exit_price = cur_price
+                    exit_price = sl_price
                     exit_type = 'sl'
                     break
-            else:  # short
-                if cur_price <= tp_price:
+                elif bar_high >= tp_price:
                     exit_idx = entry_idx + h
-                    exit_price = cur_price
+                    exit_price = tp_price
                     exit_type = 'tp'
                     break
-                if cur_price >= sl_price:
+                elif bar_low <= sl_price:
                     exit_idx = entry_idx + h
-                    exit_price = cur_price
+                    exit_price = sl_price
+                    exit_type = 'sl'
+                    break
+
+            else:  # short
+                if bar_high >= sl_price and bar_low <= tp_price:
+                    exit_idx = entry_idx + h
+                    exit_price = sl_price
+                    exit_type = 'sl'
+                    break
+                elif bar_low <= tp_price:
+                    exit_idx = entry_idx + h
+                    exit_price = tp_price
+                    exit_type = 'tp'
+                    break
+                elif bar_high >= sl_price:
+                    exit_idx = entry_idx + h
+                    exit_price = sl_price
                     exit_type = 'sl'
                     break
 
@@ -271,6 +285,7 @@ if __name__ == "__main__":
         seed=seed,
         y_proba_meta_path=os.path.join(project_root, "meta_model", "results", f"seed_{seed}", "xgboost_meta_model_probs.npy"),
         y_pred_exo_path=os.path.join(project_root, "meta_model", "results", f"seed_{seed}", "exo_model_y_pred.npy"),
+        time_pred_meta_path=os.path.join(project_root, "meta_model", "results", f"seed_{seed}", "xgboost_meta_model_time_test.npy"),
         meta_model_path=os.path.join(project_root, "meta_model", "results", f"seed_{seed}", f"xgboost_meta_model_seed_{seed}.joblib"),
         df_test_raw_exo_path=os.path.join(project_root, "exogenous_model", "dataset", "splits", f"seed_{seed}", "df_test_processed.csv"),
         capital=10000,

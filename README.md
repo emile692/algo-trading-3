@@ -9,7 +9,7 @@ All content is protected under my copyright. Any unauthorized reproduction, use,
 
 # reste à faire 
 
-- il faut que tous les indexes suivent bien tout le long de la pipeline, j'ai des doutes sur les indexes des closes utilisés dans le btt
+- 59 SL sur 60 trade ça parait louche, vérifier les SL et les TP
 - faire une vraie base de données dukascopy
 - récupérer les données de la propfirm pour entrainer le modèle dessus
 
