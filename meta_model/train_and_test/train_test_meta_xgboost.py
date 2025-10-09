@@ -190,11 +190,14 @@ def train_and_test_meta_xgboost(seed, logger):
     for feat, imp in shap_sum.head(10).items():
         logger.info(f"  {feat}: {imp:.4f}")
 
+    shap_path = os.path.join(project_root, 'meta_model', 'results', f'seed_{seed}')
+    os.makedirs(shap_path, exist_ok=True)
+
     # Visualisation SHAP
     plt.figure(figsize=(10, 8))
     shap.summary_plot(shap_values, X_train, plot_type="bar", show=False)
     plt.tight_layout()
-    plt.savefig(os.path.join(project_root, 'meta_model', 'results', f'seed_{seed}','shap_feature_importance.png'))
+    plt.savefig(os.path.join(shap_path, 'shap_feature_importance.png'))
     plt.close()
 
     # === Sauvegarde du modèle ===
