@@ -127,7 +127,7 @@ def select_best_prediction_window(df, tp_pips, sl_pips, pips_size, candidate_win
         f.write(str(best_window))
 
     # mettre à jour config et sauvegarder proprement (utilise config_path défini en haut du fichier)
-    config.setdefault('dataset', {})['window'] = int(best_window)
+    config.setdefault('label', {})['window'] = int(best_window)
     with open(config_path, 'w') as f:
         json.dump(config, f, indent=4)
 
@@ -294,9 +294,9 @@ def process_target(df: pd.DataFrame, prediction_window: int, split_name : str) -
     """
     Génère la colonne 'label' pour df en utilisant prediction_window choisi sur le train.
     """
-    TAKE_PROFIT_PIPS = config['dataset']['take_profit_pips']
-    STOP_LOSS_PIPS = config['dataset']['stop_loss_pips']
-    PIPS_SIZE = config['dataset']['pips_size']
+    TAKE_PROFIT_PIPS = config['label']['take_profit_pips']
+    STOP_LOSS_PIPS = config['label']['stop_loss_pips']
+    PIPS_SIZE = config['label']['pips_size']
 
     logger.info(f"Utilisation de PREDICTION_WINDOW={prediction_window} pour les labels du jeu {split_name}.")
     df['label'] = generate_label_with_triple_barrier_on_frac_diff_cumsum(
@@ -356,9 +356,9 @@ def process_split_compute_target_and_save(df: pd.DataFrame, seed: int):
     # --- Sélection de la fenêtre sur le train uniquement ---
     candidate_windows = [4, 8, 12, 24, 48]
     best_window, window_results = select_best_prediction_window(train_processed,
-                                                                config['dataset']['take_profit_pips'],
-                                                                config['dataset']['stop_loss_pips'],
-                                                                config['dataset']['pips_size'],
+                                                                config['label']['take_profit_pips'],
+                                                                config['label']['stop_loss_pips'],
+                                                                config['label']['pips_size'],
                                                                 candidate_windows,
                                                                 seed)
 
