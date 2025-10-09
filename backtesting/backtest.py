@@ -17,7 +17,6 @@ with open(config_path, "r") as f:
     config = json.load(f)
 
 
-
 def run_backtest_triple_barrier(
     seed: int,
     y_proba_meta_path: str,
@@ -47,7 +46,7 @@ def run_backtest_triple_barrier(
     os.makedirs(output_dir, exist_ok=True)
 
     # lecture config fallback
-    cfg_ds = config.get('dataset', {}) if 'config' in globals() else {}
+    cfg_ds = config.get('label', {}) if 'config' in globals() else {}
     TAKE_PROFIT_PIPS = take_profit_pips if take_profit_pips is not None else cfg_ds.get('take_profit_pips')
     PREDICTION_WINDOW = prediction_window if prediction_window is not None else cfg_ds.get('window')
     STOP_LOSS_PIPS = stop_loss_pips if stop_loss_pips is not None else cfg_ds.get('stop_loss_pips', TAKE_PROFIT_PIPS)
