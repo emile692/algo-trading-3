@@ -1,7 +1,9 @@
 {
     "general": {
         "seeds": [
-            42
+            42,
+            103,
+            1000
         ]
     },
     "model": {
@@ -18,7 +20,7 @@
         "learning_rate": 0.001,
         "patience": 10
     },
-    "dataset": {
+    "label": {
         "take_profit_pips": 60,
         "stop_loss_pips": 60,
         "output_dataset_path": "exogenous_model\\dataset\\features_and_target\\features_and_target.csv",
