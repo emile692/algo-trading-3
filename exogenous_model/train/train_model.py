@@ -61,44 +61,62 @@ class FocalLoss(nn.Module):
 def create_sequences(
     df: pd.DataFrame,
     sequence_length: int,
-    label_col: str = 'label',
-    time_col: str = 'time'
+    label_col: str = "label",
+    time_col: str = "time",
+    pred_window: int = 0,
+    start_idx: int = 0,
+    end_idx: int | None = None,
+    embargo: int = 0,
 ):
     """
-    Transforme un DataFrame en données séquentielles (X, y, times) pour l'entraînement d'un modèle.
+    Transforme un DataFrame en données séquentielles (X, y, times) sans fuite temporelle.
 
     Args:
-        df (pd.DataFrame): DataFrame contenant les features + une colonne de label et une colonne time.
-        sequence_length (int): Longueur des séquences à générer.
+        df (pd.DataFrame): DataFrame contenant les features + une colonne label + time.
+        sequence_length (int): Longueur de chaque séquence.
         label_col (str): Nom de la colonne cible.
         time_col (str): Nom de la colonne contenant les timestamps.
+        pred_window (int): Horizon de prédiction (nombre de pas dans le futur pour le label).
+        start_idx (int): Index de départ dans df (inclus).
+        end_idx (int | None): Index de fin (exclu). Si None, prend len(df).
+        embargo (int): Nombre d'échantillons à ignorer à la frontière (séparation train/val/test).
 
     Returns:
-        X (np.ndarray): Données séquentielles de forme (n_samples, sequence_length, n_features).
-        y (np.ndarray): Labels associés de forme (n_samples,).
-        times (np.ndarray): Timestamps associés à chaque y.
-        feature_columns (list): Liste des colonnes utilisées comme features.
+        X (np.ndarray): (n_samples, sequence_length, n_features)
+        y (np.ndarray): (n_samples,)
+        times (np.ndarray): timestamps associés à chaque y
+        feature_columns (list): liste des features utilisées
     """
+    if end_idx is None:
+        end_idx = len(df)
+    assert end_idx > start_idx, "end_idx doit être > start_idx"
+
+    feature_columns = df.columns.drop([label_col, time_col])
+
     sequence_data = []
     sequence_labels = []
     sequence_times = []
 
-    feature_columns = df.columns.drop([label_col, time_col])
+    # t = dernier index du bloc de contexte
+    t_min = start_idx + sequence_length - 1
+    # t_max = on s'arrête avant de dépasser end_idx - pred_window
+    t_max = end_idx - 1 - pred_window - embargo
 
-    for i in range(sequence_length, len(df)):
-        seq = df.iloc[i - sequence_length:i][feature_columns]
-        label = df.iloc[i][label_col]
-        time_val = df.iloc[i][time_col]  # timestamp du label
+    for t in range(t_min, t_max + 1):
+        seq = df.iloc[t - sequence_length + 1 : t + 1][feature_columns]
+        label = df.iloc[t + pred_window][label_col]
+        time_val = df.iloc[t + pred_window][time_col]
 
         sequence_data.append(seq.values)
         sequence_labels.append(label)
         sequence_times.append(time_val)
 
-    X = np.array(sequence_data)
-    y = np.array(sequence_labels)
+    X = np.array(sequence_data, dtype=np.float32)
+    y = np.array(sequence_labels, dtype=np.int64)
     times = np.array(sequence_times)
 
     return X, y, times, feature_columns.to_list()
+
 
 
 def train_and_save_model(seed: int, logger):
@@ -141,9 +159,44 @@ def train_and_save_model(seed: int, logger):
 
     # === 5. Séquençage === #
     logger.info(f"Création des séquences (longueur: {SEQUENCE_LENGTH})...")
-    X_train, y_train, time_train_seq, _ = create_sequences(train_processed, SEQUENCE_LENGTH)
-    X_val, y_val, time_val_seq, _ = create_sequences(val_processed, SEQUENCE_LENGTH)
-    X_test, y_test, time_test_seq, _ = create_sequences(test_processed, SEQUENCE_LENGTH)
+
+    with open(config_path) as f: #rechargement config
+        config = json.load(f)
+
+    PREDICTION_WINDOW = config['label']['window']
+    EMBARGO = SEQUENCE_LENGTH + PREDICTION_WINDOW  # petit tampon de sécurité
+
+    X_train, y_train, time_train_seq, _ = create_sequences(
+        train_processed,
+        SEQUENCE_LENGTH,
+        pred_window=PREDICTION_WINDOW,
+        start_idx=0,
+        end_idx=len(train_processed),
+        embargo=0,  # inutile ici car c’est un split indépendant
+    )
+
+    X_val, y_val, time_val_seq, _ = create_sequences(
+        val_processed,
+        SEQUENCE_LENGTH,
+        pred_window=PREDICTION_WINDOW,
+        start_idx=0,
+        end_idx=len(val_processed),
+        embargo=EMBARGO,  # optionnel mais safe
+    )
+
+    X_test, y_test, time_test_seq, _ = create_sequences(
+        test_processed,
+        SEQUENCE_LENGTH,
+        pred_window=PREDICTION_WINDOW,
+        start_idx=0,
+        end_idx=len(test_processed),
+        embargo=EMBARGO,
+    )
+
+    logger.debug(f"Dernier timestamp train: {time_train_seq[-1]}")
+    logger.debug(f"Premier timestamp val: {time_val_seq[0]}")
+    logger.debug(f"Premier timestamp test: {time_test_seq[0]}")
+
     logger.info(f"Séquences créées - X_train: {X_train.shape} | X_val: {X_val.shape} | X_test: {X_test.shape}")
 
     # === 6. Sauvegarde des splits === #
