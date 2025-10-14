@@ -1,0 +1,32 @@
+defaults:
+  encoding: "utf-8"
+  sep: auto
+  decimal: "."
+  timezone: "UTC"
+  volume_preference: ["volume", "VOLUME_FROM", "VOLUME_TO"]
+
+sources:
+  cryptocompare_h1:
+    filename_pattern: "{symbol}_{timeframe}.csv"
+    sep: ","
+    time:
+      from_unix: "TIME_UNIX"
+      unit: "s"
+    rename:
+      OPEN_PRICE: open
+      HIGH_PRICE: high
+      LOW_PRICE: low
+      CLOSE_PRICE: close
+      VOLUME_TO: volume
+
+    drop_missing: true
+  generic:
+    sep: "\t"
+    time:
+      from_column: "time"
+    rename:
+      open: open
+      high: high
+      low: low
+      close: close
+      tick_volume: volume
