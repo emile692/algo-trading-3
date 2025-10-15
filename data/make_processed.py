@@ -165,14 +165,14 @@ def add_label(df, prediction_window, split_name):
     return df
 
 
-def save_processed(df, split_name, seed, debug=False):
+def save_processed(df, split_name, seed, symbol, timeframe, debug=False):
     """
     Sauvegarde les features + label au format parquet (et CSV optionnel) dans data/processed.
     """
     processed_dir = DATA_DIR / "processed" / f"seed_{seed}"
     processed_dir.mkdir(parents=True, exist_ok=True)
 
-    parquet_path = processed_dir / f"{split_name}.parquet"
+    parquet_path = processed_dir / f"{symbol}_{timeframe}_{split_name}.parquet"
     df.to_parquet(parquet_path, index=True)
     logger.info(f"{split_name.upper()} sauvegardé (parquet): {parquet_path}")
 
@@ -226,9 +226,9 @@ def make_processed(symbol="EURUSD", timeframe="H1", seed=42):
     test = add_label(test, best_window, "test")
 
     # 5️⃣ Sauvegarder les splits finaux
-    save_processed(train, "train", seed)
-    save_processed(val, "val", seed)
-    save_processed(test, "test", seed)
+    save_processed(train, "train", seed, symbol, timeframe)
+    save_processed(val, "val", seed, symbol, timeframe)
+    save_processed(test, "test", seed, symbol, timeframe)
 
     logger.info("make_processed terminé avec succès.")
     return True
