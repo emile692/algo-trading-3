@@ -1,0 +1,173 @@
+2025-10-09 15:30:44,377 [INFO] Démarrage de l'exécution multi-seeds : [42]
+
+2025-10-09 15:30:44,377 [INFO] --- Début du run avec seed 42 ---
+2025-10-09 15:30:44,379 [INFO] Génération de l'exogenous dataset
+2025-10-09 15:30:44,380 [INFO] Chargement des données...
+2025-10-09 15:30:44,828 [INFO] d déjà défini dans le config : 0.5
+2025-10-09 15:30:53,885 [INFO] ADF après FFD: Stat=-50.3413, p-value=0.0000
+2025-10-09 15:30:53,887 [INFO] Stats frac_diff: Moy=-0.000093, Méd=-0.000285, %Pos=45.59%
+2025-10-09 15:30:53,963 [INFO] Calcul des indicateurs techniques...
+2025-10-09 15:31:46,130 [INFO] Nettoyage des données...
+2025-10-09 15:31:46,388 [INFO] Colonnes supprimées à cause d'une corrélation > 0.95 (hors OHLC) : ['log_price', 'sma_50', 'sma_200', 'ema_20', 'ema_100', 'rsi_dist_oversold', 'rsi_dist_overbought', 'bb_upper', 'bb_lower', 'williams_r', 'kama', 'vwap']
+2025-10-09 15:31:46,396 [INFO] Features du modèle conservées (train split)
+2025-10-09 15:31:46,396 [INFO] Data et features processées
+2025-10-09 15:31:46,399 [INFO] d déjà défini dans le config : 0.5
+2025-10-09 15:31:48,557 [INFO] ADF après FFD: Stat=-26.4869, p-value=0.0000
+2025-10-09 15:31:48,558 [INFO] Stats frac_diff: Moy=-0.000230, Méd=0.000045, %Pos=47.75%
+2025-10-09 15:31:48,590 [INFO] Calcul des indicateurs techniques...
+2025-10-09 15:32:00,925 [INFO] Nettoyage des données...
+2025-10-09 15:32:00,931 [INFO] Colonnes supprimées pour split val : ['log_price', 'sma_50', 'sma_200', 'ema_20', 'ema_100', 'rsi_dist_oversold', 'rsi_dist_overbought', 'bb_upper', 'bb_lower', 'williams_r', 'kama', 'vwap']
+2025-10-09 15:32:00,932 [INFO] Data et features processées
+2025-10-09 15:32:00,934 [INFO] d déjà défini dans le config : 0.5
+2025-10-09 15:32:02,979 [INFO] ADF après FFD: Stat=-29.7612, p-value=0.0000
+2025-10-09 15:32:02,981 [INFO] Stats frac_diff: Moy=0.000067, Méd=-0.000034, %Pos=45.96%
+2025-10-09 15:32:03,014 [INFO] Calcul des indicateurs techniques...
+2025-10-09 15:32:14,677 [INFO] Nettoyage des données...
+2025-10-09 15:32:14,682 [INFO] Colonnes supprimées pour split test : ['log_price', 'sma_50', 'sma_200', 'ema_20', 'ema_100', 'rsi_dist_oversold', 'rsi_dist_overbought', 'bb_upper', 'bb_lower', 'williams_r', 'kama', 'vwap']
+2025-10-09 15:32:14,682 [INFO] Data et features processées
+2025-10-09 15:32:57,716 [INFO] Fenêtre sélectionnée (seed=42) : 4. Sauvegardée dans C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\prediction_window_seed_42.txt et config.
+2025-10-09 15:32:57,716 [DEBUG] Détails sélection fenêtre: {'entropy': np.float64(1.0974274916385847), 'dist': {0.0: 0.349591064726903, 2.0: 0.33910976211480093, 1.0: 0.3112991731582961}, 'n_samples': 66881}
+2025-10-09 15:32:57,716 [INFO] Utilisation de PREDICTION_WINDOW=4 pour les labels du jeu train.
+2025-10-09 15:33:05,831 [INFO] Distribution des labels (train):
+label
+0.0    34.96
+2.0    33.91
+1.0    31.13
+2025-10-09 15:33:05,831 [INFO] Nombre total d'échantillons: 66885
+2025-10-09 15:33:05,837 [INFO] Utilisation de PREDICTION_WINDOW=4 pour les labels du jeu val.
+2025-10-09 15:33:07,517 [INFO] Distribution des labels (val):
+label
+0.0    54.96
+2.0    24.49
+1.0    20.54
+2025-10-09 15:33:07,517 [INFO] Nombre total d'échantillons: 13735
+2025-10-09 15:33:07,519 [INFO] Utilisation de PREDICTION_WINDOW=4 pour les labels du jeu test.
+2025-10-09 15:33:09,186 [INFO] Distribution des labels (test):
+label
+0.0    70.37
+1.0    16.85
+2.0    12.78
+2025-10-09 15:33:09,186 [INFO] Nombre total d'échantillons: 13981
+2025-10-09 15:33:12,572 [INFO] Données brutes test sauvegardées sous: C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\dataset\splits\seed_42\df_test_processed.csv
+2025-10-09 15:33:12,574 [INFO] Taille train: 66885, val: 13735, test: 13981
+2025-10-09 15:33:12,577 [INFO] Entraînement du modèle principal
+2025-10-09 15:33:12,577 [INFO] === Début de l'entraînement avec seed 42 ===
+2025-10-09 15:33:12,578 [DEBUG] Seeds PyTorch et NumPy initialisés
+2025-10-09 15:33:12,579 [DEBUG] Racine du projet: C:\Users\Emile\PycharmProjects\algo-trading-3
+2025-10-09 15:33:12,579 [INFO] Chargement des données d'entraînement, validation et test...
+2025-10-09 15:33:13,251 [INFO] Données chargées - Train: 66885 | Val: 13735 | Test: 13981
+2025-10-09 15:33:13,251 [DEBUG] Colonnes features: ['open', 'high', 'low', 'close', 'volume', 'frac_diff', 'rsi', 'rsi_signal', 'bb_dist_upper', 'bb_dist_lower', 'bb_width', 'above_sma_50', 'above_sma_200', 'sma_50_vs_200', 'macd', 'macd_diff', 'stoch_k', 'stoch_d', 'obv', 'price_diff_1', 'price_diff_2', 'autocorr_return_1', 'autocorr_return_5', 'autocorr_price_5', 'atr', 'adx', 'cci', 'roc', 'vix']
+2025-10-09 15:33:13,251 [INFO] Normalisation des données avec StandardScaler...
+2025-10-09 15:33:13,337 [INFO] Normalisation terminée
+2025-10-09 15:33:13,338 [INFO] Création des séquences (longueur: 200)...
+2025-10-09 15:35:13,025 [INFO] Séquences créées - X_train: (66685, 200, 29) | X_val: (13535, 200, 29) | X_test: (13781, 200, 29)
+2025-10-09 15:35:13,028 [INFO] Sauvegarde des séquences dans C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\dataset\splits\seed_42...
+2025-10-09 15:35:32,702 [INFO] Sauvegarde des séquences terminée
+2025-10-09 15:35:32,703 [INFO] Préparation des DataLoaders (batch_size=64)...
+2025-10-09 15:35:34,046 [INFO] DataLoaders créés - Train batches: 1042 | Val batches: 212
+2025-10-09 15:35:34,266 [INFO] Utilisation du device: cuda
+2025-10-09 15:35:38,259 [INFO] Modèle initialisé - Architecture: LSTMClassifier(
+  (lstm): LSTM(29, 64, batch_first=True)
+  (fc): Linear(in_features=64, out_features=3, bias=True)
+)
+2025-10-09 15:35:38,314 [INFO] Poids des classes calculés: [0.95078204 1.07768512 0.98008524]
+2025-10-09 15:35:38,315 [INFO] Début de l'entraînement pour 100 epochs (patience=10)...
+2025-10-09 15:35:46,566 [DEBUG] [Epoch 1/100] Train Loss: 0.0532 | Val Loss: 0.1720 | Best Val Loss: inf
+2025-10-09 15:35:46,585 [DEBUG] Nouveau meilleur modèle sauvegardé à C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\model_seed_42.pt
+2025-10-09 15:35:53,390 [DEBUG] Nouveau meilleur modèle sauvegardé à C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\model_seed_42.pt
+2025-10-09 15:35:59,750 [DEBUG] [Epoch 3/100] Train Loss: 0.0170 | Val Loss: 0.0646 | Best Val Loss: 0.1640
+2025-10-09 15:35:59,752 [DEBUG] Nouveau meilleur modèle sauvegardé à C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\model_seed_42.pt
+2025-10-09 15:36:06,059 [DEBUG] Nouveau meilleur modèle sauvegardé à C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\model_seed_42.pt
+2025-10-09 15:36:12,345 [DEBUG] [Epoch 5/100] Train Loss: 0.0125 | Val Loss: 0.0628 | Best Val Loss: 0.0509
+2025-10-09 15:36:18,739 [DEBUG] Nouveau meilleur modèle sauvegardé à C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\model_seed_42.pt
+2025-10-09 15:36:25,611 [DEBUG] [Epoch 7/100] Train Loss: 0.0106 | Val Loss: 0.0229 | Best Val Loss: 0.0436
+2025-10-09 15:36:25,614 [DEBUG] Nouveau meilleur modèle sauvegardé à C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\model_seed_42.pt
+2025-10-09 15:36:38,612 [DEBUG] [Epoch 9/100] Train Loss: 0.0097 | Val Loss: 0.0357 | Best Val Loss: 0.0229
+2025-10-09 15:36:51,721 [DEBUG] [Epoch 11/100] Train Loss: 0.0083 | Val Loss: 0.0382 | Best Val Loss: 0.0229
+2025-10-09 15:37:04,953 [DEBUG] [Epoch 13/100] Train Loss: 0.0076 | Val Loss: 0.0684 | Best Val Loss: 0.0229
+2025-10-09 15:37:17,689 [DEBUG] [Epoch 15/100] Train Loss: 0.0068 | Val Loss: 0.0242 | Best Val Loss: 0.0229
+2025-10-09 15:37:30,479 [DEBUG] [Epoch 17/100] Train Loss: 0.0060 | Val Loss: 0.0248 | Best Val Loss: 0.0229
+2025-10-09 15:37:30,479 [INFO] Early stopping à l'epoch 17
+2025-10-09 15:37:30,479 [INFO] Entraînement terminé - Meilleure val_loss: 0.0229
+2025-10-09 15:37:30,487 [INFO] Scaler sauvegardé à C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\scaler_seed_42.pkl
+2025-10-09 15:37:30,487 [INFO] === Fin de l'entraînement avec seed 42 ===
+2025-10-09 15:37:31,096 [INFO] Évaluation du modèle principal
+2025-10-09 15:37:41,373 [INFO] Accuracy: 0.9589, Precision: 0.9347, Recall: 0.9586, F1: 0.9436
+2025-10-09 15:37:41,443 [INFO] Génération du dataset méta
+2025-10-09 15:37:41,852 [INFO] Données de test brutes chargées : 13981 points
+2025-10-09 15:37:41,869 [INFO] Données de test brutes alignées et nettoyées : 13981 points
+2025-10-09 15:37:41,875 [INFO] Prédiction du modèle principal...
+2025-10-09 15:37:42,899 [INFO] Calcul de la feature VRAPD...
+2025-10-09 15:37:43,034 [INFO] Dataset sauvegardé sous C:\Users\Emile\PycharmProjects\algo-trading-3\meta_model\dataset\features_and_target\meta_dataset_seed_42.csv
+2025-10-09 15:37:43,084 [INFO] Entraînement et évaluation du modèle XGBoost méta
+2025-10-09 15:37:43,121 [INFO] Distribution des classes méta: Classe 0 (erreur): 3.98%, Classe 1 (correct): 96.02%
+2025-10-09 15:37:43,140 [INFO] Optimisation du seuil pour détection d'erreurs...
+2025-10-09 15:37:43,731 [INFO] Fold 1: seuil optimisé pour erreurs = 0.5200
+2025-10-09 15:37:44,266 [INFO] Fold 2: seuil optimisé pour erreurs = 0.5700
+2025-10-09 15:37:45,019 [INFO] Fold 3: seuil optimisé pour erreurs = 0.5400
+2025-10-09 15:37:45,019 [INFO] Seuil optimal moyen: 0.5433
+2025-10-09 15:37:45,020 [INFO] Scale pos weight: 24.14 (ratio classe1/classe0)
+2025-10-09 15:37:45,020 [INFO] Entraînement final du méta-modèle...
+2025-10-09 15:37:47,986 [INFO] Calibration du modèle...
+2025-10-09 15:37:51,654 [INFO] Évaluation détaillée des erreurs:
+2025-10-09 15:37:51,664 [INFO]               precision    recall  f1-score   support
+
+           0       0.15      0.42      0.22       109
+           1       0.97      0.90      0.94      2625
+
+    accuracy                           0.88      2734
+   macro avg       0.56      0.66      0.58      2734
+weighted avg       0.94      0.88      0.91      2734
+
+2025-10-09 15:37:51,685 [INFO] ROC AUC Score : 0.813260
+2025-10-09 15:37:51,689 [INFO] Matrice de confusion :
+[[  46   63]
+ [ 264 2361]]
+2025-10-09 15:37:51,690 [INFO] Classe 1 - Precision: 0.9740, Recall: 0.8994, F1: 0.9352
+2025-10-09 15:37:51,690 [INFO] Classe 0 (Erreurs) - Precision: 0.1484, Recall: 0.4220, F1: 0.2196
+2025-10-09 15:37:51,691 [INFO] Faux Négatifs (Erreurs non détectées): 63/109 = 57.80%
+2025-10-09 15:38:01,694 [INFO] Top 10 des features par importance SHAP:
+2025-10-09 15:38:01,694 [INFO]   vrapd: 1.9896
+2025-10-09 15:38:01,694 [INFO]   volume: 1.0467
+2025-10-09 15:38:01,694 [INFO]   vix: 1.0420
+2025-10-09 15:38:01,694 [INFO]   open: 0.6842
+2025-10-09 15:38:01,695 [INFO]   low: 0.6713
+2025-10-09 15:38:01,695 [INFO]   high: 0.6413
+2025-10-09 15:38:01,695 [INFO]   close: 0.6033
+2025-10-09 15:38:02,093 [ERROR] Erreur lors du traitement du seed 42: [Errno 2] No such file or directory: 'C:\\Users\\Emile\\PycharmProjects\\algo-trading-3\\meta_model\\results\\seed_42\\shap_feature_importance.png'
+Traceback (most recent call last):
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\run_multi_seed.py", line 61, in run_multi_seed
+    meta_metrics = train_and_test_meta_xgboost(seed=seed, logger=logger)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\meta_model\train_and_test\train_test_meta_xgboost.py", line 197, in train_and_test_meta_xgboost
+    plt.savefig(os.path.join(project_root, 'meta_model', 'results', f'seed_{seed}','shap_feature_importance.png'))
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\matplotlib\pyplot.py", line 1250, in savefig
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\matplotlib\figure.py", line 3490, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\matplotlib\backend_bases.py", line 2186, in print_figure
+    result = print_method(
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\matplotlib\backend_bases.py", line 2042, in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\matplotlib\backends\backend_agg.py", line 481, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\matplotlib\backends\backend_agg.py", line 430, in _print_pil
+    mpl.image.imsave(
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\matplotlib\image.py", line 1657, in imsave
+    image.save(fname, **pil_kwargs)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\PIL\Image.py", line 2583, in save
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\Emile\\PycharmProjects\\algo-trading-3\\meta_model\\results\\seed_42\\shap_feature_importance.png'
+2025-10-09 15:38:02,215 [INFO] Moyenne des scores sur tous les seeds :
+2025-10-09 15:38:02,216 [INFO] accuracy            0.9589
+precision_macro     0.9347
+recall_macro        0.9586
+f1_macro            0.9436
+seed               42.0000
+dtype: float64
+2025-10-09 15:38:02,217 [INFO] Écart-type des scores :
+2025-10-09 15:38:02,217 [INFO] accuracy          NaN
+precision_macro   NaN
+recall_macro      NaN
+f1_macro          NaN
+seed              NaN
+dtype: float64

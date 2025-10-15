@@ -1,0 +1,93 @@
+2025-10-09 22:08:19,293 [INFO] Démarrage de l'exécution multi-seeds : [42]
+
+2025-10-09 22:08:19,294 [INFO] --- Début du run avec seed 42 ---
+2025-10-09 22:08:19,296 [INFO] Génération de l'exogenous dataset
+2025-10-09 22:08:19,296 [INFO] Chargement des données...
+2025-10-09 22:08:19,760 [INFO] Recherche automatique du d optimal avec différentiation fractionnaire...
+2025-10-09 22:08:38,878 [INFO] d sélectionné : 0.5 (p-value = 0.0000)
+2025-10-09 22:08:47,943 [INFO] ADF après FFD: Stat=-50.3413, p-value=0.0000
+2025-10-09 22:08:47,945 [INFO] Stats frac_diff: Moy=-0.000093, Méd=-0.000285, %Pos=45.59%
+2025-10-09 22:08:48,128 [INFO] Calcul des indicateurs techniques...
+2025-10-09 22:09:38,755 [ERROR] Erreur lors du traitement du seed 42: HTTPSConnectionPool(host='fred.stlouisfed.org', port=443): Max retries exceeded with url: /graph/fredgraph.csv?id=VIXCLS (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x0000017DB3BD85B0>: Failed to resolve 'fred.stlouisfed.org' ([Errno 11001] getaddrinfo failed)"))
+Traceback (most recent call last):
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\urllib3\connection.py", line 198, in _new_conn
+    sock = connection.create_connection(
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\urllib3\util\connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+  File "C:\Users\Emile\AppData\Local\Programs\Python\Python310\lib\socket.py", line 955, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+socket.gaierror: [Errno 11001] getaddrinfo failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\urllib3\connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\urllib3\connectionpool.py", line 488, in _make_request
+    raise new_e
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\urllib3\connectionpool.py", line 464, in _make_request
+    self._validate_conn(conn)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\urllib3\connectionpool.py", line 1093, in _validate_conn
+    conn.connect()
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\urllib3\connection.py", line 753, in connect
+    self.sock = sock = self._new_conn()
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\urllib3\connection.py", line 205, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: <urllib3.connection.HTTPSConnection object at 0x0000017DB3BD85B0>: Failed to resolve 'fred.stlouisfed.org' ([Errno 11001] getaddrinfo failed)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\requests\adapters.py", line 644, in send
+    resp = conn.urlopen(
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\urllib3\connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\urllib3\util\retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='fred.stlouisfed.org', port=443): Max retries exceeded with url: /graph/fredgraph.csv?id=VIXCLS (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x0000017DB3BD85B0>: Failed to resolve 'fred.stlouisfed.org' ([Errno 11001] getaddrinfo failed)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\run_multi_seed.py", line 43, in run_multi_seed
+    generate_exogenous_dataset(seed)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\dataset\generate_dataset.py", line 433, in generate_exogenous_dataset
+    train_processed, val_processed, test_processed = process_split_compute_target_and_save(df, seed)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\dataset\generate_dataset.py", line 352, in process_split_compute_target_and_save
+    train_processed = process_data(df_train, seed, False, 'train')
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\dataset\generate_dataset.py", line 239, in process_data
+    df = enrich_with_vix(df)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\dataset\generate_dataset.py", line 26, in enrich_with_vix
+    vix_df = download_vix(start=eurusd_df.index.min().date().isoformat(),
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\dataset\external_source\evz_loader.py", line 14, in download_vix
+    vix = web.DataReader('VIXCLS', 'fred', start=start, end=end)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\pandas\util\_decorators.py", line 213, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\pandas_datareader\data.py", line 456, in DataReader
+    ).read()
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\pandas_datareader\fred.py", line 27, in read
+    return self._read()
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\pandas_datareader\fred.py", line 62, in _read
+    [fetch_data(url, n) for url, n in zip(urls, names)], axis=1, join="outer"
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\pandas_datareader\fred.py", line 62, in <listcomp>
+    [fetch_data(url, n) for url, n in zip(urls, names)], axis=1, join="outer"
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\pandas_datareader\fred.py", line 41, in fetch_data
+    resp = self._read_url_as_StringIO(url)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\pandas_datareader\base.py", line 119, in _read_url_as_StringIO
+    response = self._get_response(url, params=params)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\pandas_datareader\base.py", line 155, in _get_response
+    response = self.session.get(
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\requests\sessions.py", line 602, in get
+    return self.request("GET", url, **kwargs)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\requests\sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\requests\sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\Users\Emile\PycharmProjects\algo-trading-3\.venv\lib\site-packages\requests\adapters.py", line 677, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='fred.stlouisfed.org', port=443): Max retries exceeded with url: /graph/fredgraph.csv?id=VIXCLS (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x0000017DB3BD85B0>: Failed to resolve 'fred.stlouisfed.org' ([Errno 11001] getaddrinfo failed)"))
+2025-10-09 22:09:38,923 [INFO] Moyenne des scores sur tous les seeds :
+2025-10-09 22:09:38,924 [INFO] Series([], dtype: float64)
+2025-10-09 22:09:38,924 [INFO] Écart-type des scores :
+2025-10-09 22:09:38,924 [INFO] Series([], dtype: float64)
+2025-10-09 22:09:38,927 [INFO] Résultats enregistrés dans meta_model/results/results_multi_seed.csv

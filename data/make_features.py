@@ -10,7 +10,7 @@ from ta.volatility import BollingerBands, AverageTrueRange
 from ta.volume import OnBalanceVolumeIndicator, VolumeWeightedAveragePrice
 
 from tools.logger import setup_logger
-from exogenous_model.utils.fracdiff import FracDifferentiator
+from exogenous_model_v0.utils.fracdiff import FracDifferentiator
 from data.make_splits import compute_splits
 
 logger = setup_logger()

@@ -13,7 +13,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
 FEATURES_DIR = DATA_DIR / "features"
 CONFIG_PATH = PROJECT_ROOT / "config" / "config_test.json"
-OUTPUT_DIR = PROJECT_ROOT / "exogenous_model" / "dataset" / "splits"
+OUTPUT_DIR = PROJECT_ROOT / "exogenous_model_v0" / "dataset" / "splits"
 
 # === Load config ===
 with open(CONFIG_PATH, "r", encoding="utf-8") as f:
@@ -121,7 +121,7 @@ def process_split(df, split_name, seed, protected_cols, threshold):
     """
     Gère la suppression des features corrélées et la cohérence des colonnes.
     """
-    checkpoints_dir = PROJECT_ROOT / "exogenous_model" / "model" / "checkpoints"
+    checkpoints_dir = PROJECT_ROOT / "exogenous_model_v0" / "model" / "checkpoints"
     checkpoints_dir.mkdir(parents=True, exist_ok=True)
 
     features_path = checkpoints_dir / f"features_used_seed_{seed}.txt"
@@ -174,12 +174,12 @@ def save_processed(df, split_name, seed, debug=False):
 
     parquet_path = processed_dir / f"{split_name}.parquet"
     df.to_parquet(parquet_path, index=True)
-    logger.info(f"✅ {split_name.upper()} sauvegardé (parquet): {parquet_path}")
+    logger.info(f"{split_name.upper()} sauvegardé (parquet): {parquet_path}")
 
     if debug:
         csv_path = processed_dir / f"{split_name}.csv"
         df.to_csv(csv_path, index=True)
-        logger.info(f"💾 Export CSV (debug): {csv_path}")
+        logger.info(f"Export CSV (debug): {csv_path}")
 
     return parquet_path
 
@@ -230,7 +230,7 @@ def make_processed(symbol="EURUSD", timeframe="H1", seed=42):
     save_processed(val, "val", seed)
     save_processed(test, "test", seed)
 
-    logger.info("🎯 make_processed terminé avec succès.")
+    logger.info("make_processed terminé avec succès.")
     return True
 
 

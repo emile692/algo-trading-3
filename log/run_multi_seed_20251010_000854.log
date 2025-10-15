@@ -1,0 +1,28 @@
+2025-10-10 00:08:55,460 [INFO] Démarrage de l'exécution multi-seeds : [42]
+
+2025-10-10 00:08:55,461 [INFO] --- Début du run avec seed 42 ---
+2025-10-10 00:08:55,462 [INFO] Génération de l'exogenous dataset
+2025-10-10 00:08:55,462 [INFO] Chargement des données...
+2025-10-10 00:08:55,905 [INFO] Recherche automatique du d optimal avec différentiation fractionnaire...
+2025-10-10 00:09:15,752 [INFO] d sélectionné : 0.5 (p-value = 0.0000)
+2025-10-10 00:09:24,994 [INFO] ADF après FFD: Stat=-50.3413, p-value=0.0000
+2025-10-10 00:09:24,996 [INFO] Stats frac_diff: Moy=-0.000093, Méd=-0.000285, %Pos=45.59%
+2025-10-10 00:09:25,179 [INFO] Calcul des indicateurs techniques...
+2025-10-10 00:10:16,095 [INFO] Nettoyage des données...
+2025-10-10 00:10:16,330 [INFO] Colonnes supprimées à cause d'une corrélation > 0.95 (hors OHLC) : ['log_price', 'sma_50', 'sma_200', 'ema_20', 'ema_100', 'rsi_dist_oversold', 'rsi_dist_overbought', 'bb_upper', 'bb_lower', 'williams_r', 'kama', 'vwap']
+2025-10-10 00:10:16,337 [INFO] Features du modèle conservées (train split)
+2025-10-10 00:10:16,338 [INFO] Data et features processées
+2025-10-10 00:10:16,340 [INFO] d déjà défini dans le config : 0.5
+2025-10-10 00:10:18,153 [INFO] ADF après FFD: Stat=-26.4869, p-value=0.0000
+2025-10-10 00:10:18,154 [INFO] Stats frac_diff: Moy=-0.000230, Méd=0.000045, %Pos=47.75%
+2025-10-10 00:10:18,192 [INFO] Calcul des indicateurs techniques...
+2025-10-10 00:10:28,868 [INFO] Nettoyage des données...
+2025-10-10 00:10:28,875 [INFO] Colonnes supprimées pour split val : ['log_price', 'sma_50', 'sma_200', 'ema_20', 'ema_100', 'rsi_dist_oversold', 'rsi_dist_overbought', 'bb_upper', 'bb_lower', 'williams_r', 'kama', 'vwap']
+2025-10-10 00:10:28,876 [INFO] Data et features processées
+2025-10-10 00:10:28,878 [INFO] d déjà défini dans le config : 0.5
+2025-10-10 00:10:30,689 [INFO] ADF après FFD: Stat=-29.7612, p-value=0.0000
+2025-10-10 00:10:30,690 [INFO] Stats frac_diff: Moy=0.000067, Méd=-0.000034, %Pos=45.96%
+2025-10-10 00:10:30,722 [INFO] Calcul des indicateurs techniques...
+2025-10-10 00:10:41,414 [INFO] Nettoyage des données...
+2025-10-10 00:10:41,418 [INFO] Colonnes supprimées pour split test : ['log_price', 'sma_50', 'sma_200', 'ema_20', 'ema_100', 'rsi_dist_oversold', 'rsi_dist_overbought', 'bb_upper', 'bb_lower', 'williams_r', 'kama', 'vwap']
+2025-10-10 00:10:41,419 [INFO] Data et features processées

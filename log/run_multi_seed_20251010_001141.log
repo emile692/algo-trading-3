@@ -1,0 +1,6 @@
+2025-10-10 00:11:42,347 [INFO] Démarrage de l'exécution multi-seeds : [42, 103, 1000]
+
+2025-10-10 00:11:42,347 [INFO] --- Début du run avec seed 42 ---
+2025-10-10 00:11:42,349 [INFO] Génération de l'exogenous dataset
+2025-10-10 00:11:42,349 [INFO] Chargement des données...
+2025-10-10 00:11:42,790 [INFO] d déjà défini dans le config : 0.5

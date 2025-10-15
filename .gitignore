@@ -4,6 +4,8 @@ __pycache__/
 *.pyo
 *.pyd
 *.env
+*.log
+*.png
 *.venv
 env/
 venv/
@@ -17,7 +19,7 @@ venv/
 uv.lock
 
 # Données temporaires
-exogenous_model/**/__pycache__/
+exogenous_model_v0/**/__pycache__/
 meta_model/**/__pycache__/
 **/checkpoints/
 **/features_and_target/

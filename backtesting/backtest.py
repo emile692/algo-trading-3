@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import os
 
-from config.logger.logger import setup_logger
+from tools.logger import setup_logger
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 logger = setup_logger()
@@ -286,7 +286,7 @@ if __name__ == "__main__":
         y_pred_exo_path=os.path.join(project_root, "meta_model", "results", f"seed_{seed}", "exo_model_y_pred.npy"),
         time_pred_meta_path=os.path.join(project_root, "meta_model", "results", f"seed_{seed}", "xgboost_meta_model_time_test.npy"),
         meta_model_path=os.path.join(project_root, "meta_model", "results", f"seed_{seed}", f"xgboost_meta_model_seed_{seed}.joblib"),
-        df_test_raw_exo_path=os.path.join(project_root, "exogenous_model", "dataset", "splits", f"seed_{seed}", "df_test_processed.csv"),
+        df_test_raw_exo_path=os.path.join(project_root, "exogenous_model_v0", "dataset", "splits", f"seed_{seed}", "df_test_processed.csv"),
         capital=10000,
         transaction_fee=0.001,
         output_dir=os.path.join(project_root, "backtesting", "results")

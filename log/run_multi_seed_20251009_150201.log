@@ -1,0 +1,84 @@
+2025-10-09 15:02:04,218 [INFO] Démarrage de l'exécution multi-seeds : [42]
+
+2025-10-09 15:02:04,218 [INFO] --- Début du run avec seed 42 ---
+2025-10-09 15:02:04,270 [INFO] Génération de l'exogenous dataset
+2025-10-09 15:02:04,271 [INFO] Chargement des données...
+2025-10-09 15:02:04,953 [INFO] d déjà défini dans le config : 0.5
+2025-10-09 15:02:13,767 [INFO] ADF après FFD: Stat=-50.3413, p-value=0.0000
+2025-10-09 15:02:13,769 [INFO] Stats frac_diff: Moy=-0.000093, Méd=-0.000285, %Pos=45.59%
+2025-10-09 15:02:13,946 [INFO] Calcul des indicateurs techniques...
+2025-10-09 15:03:04,568 [INFO] Nettoyage des données...
+2025-10-09 15:03:04,821 [INFO] Colonnes supprimées à cause d'une corrélation > 0.95 (hors OHLC) : ['log_price', 'sma_50', 'sma_200', 'ema_20', 'ema_100', 'rsi_dist_oversold', 'rsi_dist_overbought', 'bb_upper', 'bb_lower', 'williams_r', 'kama', 'vwap']
+2025-10-09 15:03:04,832 [INFO] Features du modèle conservées (train split)
+2025-10-09 15:03:04,832 [INFO] Data et features processées
+2025-10-09 15:03:04,834 [INFO] d déjà défini dans le config : 0.5
+2025-10-09 15:03:06,693 [INFO] ADF après FFD: Stat=-26.4869, p-value=0.0000
+2025-10-09 15:03:06,694 [INFO] Stats frac_diff: Moy=-0.000230, Méd=0.000045, %Pos=47.75%
+2025-10-09 15:03:06,727 [INFO] Calcul des indicateurs techniques...
+2025-10-09 15:03:17,396 [INFO] Nettoyage des données...
+2025-10-09 15:03:17,412 [INFO] Colonnes supprimées pour split val : ['log_price', 'sma_50', 'sma_200', 'ema_20', 'ema_100', 'rsi_dist_oversold', 'rsi_dist_overbought', 'bb_upper', 'bb_lower', 'williams_r', 'kama', 'vwap']
+2025-10-09 15:03:17,412 [INFO] Data et features processées
+2025-10-09 15:03:17,414 [INFO] d déjà défini dans le config : 0.5
+2025-10-09 15:03:19,194 [INFO] ADF après FFD: Stat=-29.7612, p-value=0.0000
+2025-10-09 15:03:19,195 [INFO] Stats frac_diff: Moy=0.000067, Méd=-0.000034, %Pos=45.96%
+2025-10-09 15:03:19,229 [INFO] Calcul des indicateurs techniques...
+2025-10-09 15:03:29,904 [INFO] Nettoyage des données...
+2025-10-09 15:03:29,910 [INFO] Colonnes supprimées pour split test : ['log_price', 'sma_50', 'sma_200', 'ema_20', 'ema_100', 'rsi_dist_oversold', 'rsi_dist_overbought', 'bb_upper', 'bb_lower', 'williams_r', 'kama', 'vwap']
+2025-10-09 15:03:29,911 [INFO] Data et features processées
+2025-10-09 15:04:07,103 [INFO] Fenêtre sélectionnée (seed=42) : 4. Sauvegardée dans C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\prediction_window_seed_42.txt et config.
+2025-10-09 15:04:07,103 [DEBUG] Détails sélection fenêtre: {'entropy': np.float64(1.0974274916385847), 'dist': {0.0: 0.349591064726903, 2.0: 0.33910976211480093, 1.0: 0.3112991731582961}, 'n_samples': 66881}
+2025-10-09 15:04:07,103 [INFO] Utilisation de PREDICTION_WINDOW=4 pour les labels du jeu train.
+2025-10-09 15:04:14,429 [INFO] Distribution des labels (train):
+label
+0.0    34.96
+2.0    33.91
+1.0    31.13
+2025-10-09 15:04:14,429 [INFO] Nombre total d'échantillons: 66885
+2025-10-09 15:04:14,433 [INFO] Utilisation de PREDICTION_WINDOW=4 pour les labels du jeu val.
+2025-10-09 15:04:15,903 [INFO] Distribution des labels (val):
+label
+0.0    54.96
+2.0    24.49
+1.0    20.54
+2025-10-09 15:04:15,903 [INFO] Nombre total d'échantillons: 13735
+2025-10-09 15:04:15,905 [INFO] Utilisation de PREDICTION_WINDOW=4 pour les labels du jeu test.
+2025-10-09 15:04:17,423 [INFO] Distribution des labels (test):
+label
+0.0    70.37
+1.0    16.85
+2.0    12.78
+2025-10-09 15:04:17,423 [INFO] Nombre total d'échantillons: 13981
+2025-10-09 15:04:20,488 [INFO] Données brutes test sauvegardées sous: C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\dataset\splits\seed_42\df_test_processed.csv
+2025-10-09 15:04:20,489 [INFO] Taille train: 66885, val: 13735, test: 13981
+2025-10-09 15:04:20,491 [INFO] Entraînement du modèle principal
+2025-10-09 15:04:20,491 [INFO] === Début de l'entraînement avec seed 42 ===
+2025-10-09 15:04:20,506 [DEBUG] Seeds PyTorch et NumPy initialisés
+2025-10-09 15:04:20,507 [DEBUG] Racine du projet: C:\Users\Emile\PycharmProjects\algo-trading-3
+2025-10-09 15:04:20,507 [INFO] Chargement des données d'entraînement, validation et test...
+2025-10-09 15:04:21,062 [INFO] Données chargées - Train: 66885 | Val: 13735 | Test: 13981
+2025-10-09 15:04:21,063 [DEBUG] Colonnes features: ['open', 'high', 'low', 'close', 'volume', 'frac_diff', 'rsi', 'rsi_signal', 'bb_dist_upper', 'bb_dist_lower', 'bb_width', 'above_sma_50', 'above_sma_200', 'sma_50_vs_200', 'macd', 'macd_diff', 'stoch_k', 'stoch_d', 'obv', 'price_diff_1', 'price_diff_2', 'autocorr_return_1', 'autocorr_return_5', 'autocorr_price_5', 'atr', 'adx', 'cci', 'roc', 'vix']
+2025-10-09 15:04:21,063 [INFO] Normalisation des données avec StandardScaler...
+2025-10-09 15:04:21,143 [INFO] Normalisation terminée
+2025-10-09 15:04:21,144 [INFO] Création des séquences (longueur: 200)...
+2025-10-09 15:06:14,117 [INFO] Séquences créées - X_train: (66685, 200, 29) | X_val: (13535, 200, 29) | X_test: (13781, 200, 29)
+2025-10-09 15:06:14,117 [INFO] Sauvegarde des séquences dans C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\dataset\splits\seed_42...
+2025-10-09 15:06:51,730 [INFO] Sauvegarde des séquences terminée
+2025-10-09 15:06:51,730 [INFO] Préparation des DataLoaders (batch_size=64)...
+2025-10-09 15:06:52,359 [INFO] DataLoaders créés - Train batches: 1042 | Val batches: 212
+2025-10-09 15:06:52,359 [INFO] Utilisation du device: cpu
+2025-10-09 15:07:10,065 [INFO] Modèle initialisé - Architecture: LSTMClassifier(
+  (lstm): LSTM(29, 64, batch_first=True)
+  (fc): Linear(in_features=64, out_features=3, bias=True)
+)
+2025-10-09 15:07:10,081 [INFO] Poids des classes calculés: [0.95078204 1.07768512 0.98008524]
+2025-10-09 15:07:10,081 [INFO] Début de l'entraînement pour 100 epochs (patience=10)...
+2025-10-09 15:07:52,793 [DEBUG] [Epoch 1/100] Train Loss: 0.0532 | Val Loss: 0.1720 | Best Val Loss: inf
+2025-10-09 15:07:52,828 [DEBUG] Nouveau meilleur modèle sauvegardé à C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\model_seed_42.pt
+2025-10-09 15:08:37,121 [DEBUG] Nouveau meilleur modèle sauvegardé à C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\model_seed_42.pt
+2025-10-09 15:09:16,290 [DEBUG] [Epoch 3/100] Train Loss: 0.0170 | Val Loss: 0.0646 | Best Val Loss: 0.1640
+2025-10-09 15:09:16,293 [DEBUG] Nouveau meilleur modèle sauvegardé à C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\model_seed_42.pt
+2025-10-09 15:09:58,594 [DEBUG] Nouveau meilleur modèle sauvegardé à C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\model_seed_42.pt
+2025-10-09 15:10:40,434 [DEBUG] [Epoch 5/100] Train Loss: 0.0125 | Val Loss: 0.0628 | Best Val Loss: 0.0509
+2025-10-09 15:11:20,962 [DEBUG] Nouveau meilleur modèle sauvegardé à C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\model_seed_42.pt
+2025-10-09 15:12:01,924 [DEBUG] [Epoch 7/100] Train Loss: 0.0106 | Val Loss: 0.0229 | Best Val Loss: 0.0436
+2025-10-09 15:12:01,926 [DEBUG] Nouveau meilleur modèle sauvegardé à C:\Users\Emile\PycharmProjects\algo-trading-3\exogenous_model\model\checkpoints\model_seed_42.pt
