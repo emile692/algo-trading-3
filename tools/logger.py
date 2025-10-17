@@ -1,17 +1,21 @@
 import logging
 import os
+from pathlib import Path
+
 import colorlog
 from datetime import datetime
 
 
 def setup_logger():
     # Créer un répertoire pour les logs s'il n'existe pas
-    log_dir = "..//log"
-    os.makedirs(log_dir, exist_ok=True)
+    PROJECT_ROOT = Path(__file__).resolve().parents[2]
+    LOG_DIR = PROJECT_ROOT / "log"
+
+    os.makedirs(LOG_DIR, exist_ok=True)
 
     # Ajouter un horodatage au nom du fichier log
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_file = os.path.join(log_dir, f"run_multi_seed_{timestamp}.log")
+    log_file = os.path.join(LOG_DIR, f"run_multi_seed_{timestamp}.log")
 
     logger = logging.getLogger("multi_seed_logger")
     logger.setLevel(logging.DEBUG)  # Capturer les messages au niveau DEBUG
