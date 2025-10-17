@@ -140,7 +140,7 @@ def _add_vix(df, cfg):
     vcfg = cfg["exogenous"]["vix"]
     if not vcfg.get("enable", False):
         return df
-    cache_path = Path(vcfg["cache_path"])
+    cache_path = PROJECT_ROOT / vcfg["cache_path"]
     if not cache_path.exists():
         logger.warning(f"⚠️ VIX cache introuvable: {cache_path}")
         return df
