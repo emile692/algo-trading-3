@@ -1,9 +1,10 @@
 # data/make_processed.py
-
 import json
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from statsmodels.tsa.stattools import adfuller
+
 from tools.logger import setup_logger
 
 logger = setup_logger()
@@ -13,43 +14,172 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
 FEATURES_DIR = DATA_DIR / "features"
 CONFIG_PATH = PROJECT_ROOT / "config" / "config_test.json"
-OUTPUT_DIR = PROJECT_ROOT / "exogenous_model_v0" / "dataset" / "splits"
 
 # === Load config ===
 with open(CONFIG_PATH, "r", encoding="utf-8") as f:
     CONFIG = json.load(f)
 
 
-# === Utils ===
-def remove_highly_correlated_features(df, threshold=0.95, protected_cols=None):
+# ===============================
+# Utils génériques
+# ===============================
+def _ensure_numeric_corr(df: pd.DataFrame, protected_cols):
     """
-    Supprime les features fortement corrélées entre elles, sauf les colonnes protégées.
-    Ignore automatiquement les colonnes non numériques comme 'split', 'label', etc.
+    Retourne le sous-ensemble numérique de df pour calculer la matrice de corrélation,
+    en excluant les colonnes non-numériques et en s'assurant que protected_cols restent éligibles au 'keep'.
+    """
+    numeric_df = df.select_dtypes(include=[np.number]).copy()
+    missing_protected = [c for c in protected_cols if c not in numeric_df.columns]
+    if missing_protected:
+        logger.debug(f"[Corr] Colonnes protégées absentes du bloc numérique: {missing_protected}")
+    return numeric_df
+
+
+def remove_highly_correlated_features(df: pd.DataFrame, threshold=0.95, protected_cols=None):
+    """
+    Supprime les features fortement corrélées (corr abs > threshold), sauf les colonnes protégées.
+    Ignore automatiquement les colonnes non numériques.
     """
     if protected_cols is None:
         protected_cols = {"open", "high", "low", "close", "frac_diff"}
 
-    # Sélection uniquement des colonnes numériques
-    numeric_df = df.select_dtypes(include=[np.number])
+    numeric_df = _ensure_numeric_corr(df, protected_cols)
+    if numeric_df.shape[1] == 0:
+        logger.info("[Corr] Aucune colonne numérique, on ne supprime rien.")
+        return df, []
 
-    # Corrélation absolue
     corr_matrix = numeric_df.corr().abs()
     upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
     to_drop = [col for col in upper.columns if any(upper[col] > threshold)]
-
-    # Ne pas supprimer les colonnes protégées
     to_drop = [col for col in to_drop if col not in protected_cols]
 
     logger.info(f"Suppression {len(to_drop)} colonnes corrélées > {threshold}")
     if to_drop:
         logger.debug(f"Colonnes supprimées : {to_drop}")
 
-    # Supprime les colonnes corrélées du DataFrame original
     df = df.drop(columns=to_drop, errors="ignore")
     return df, to_drop
 
 
+# ===============================
+# Structural Breaks Features
+# ===============================
+def cusum_levels(logp: pd.Series, k_sigma=5.0, h=0.01, win=250) -> pd.DataFrame:
+    """
+    CUSUM “levels” sur log-prix (proxy rupture). Marche bien en H1.
+    - k_sigma : seuil en écart-types normalisés
+    - h       : drift/min cutoff
+    - win     : fenêtre pour estimer la std des increments (rolling)
+    """
+    logp = logp.astype(float)
+    sigma = logp.diff().rolling(win, min_periods=win // 2).std()
 
+    s_pos = pd.Series(0.0, index=logp.index)
+    s_neg = pd.Series(0.0, index=logp.index)
+    breaks = pd.Series(0, index=logp.index, dtype=int)
+
+    for i in range(1, len(logp)):
+        denom = sigma.iloc[i] if pd.notna(sigma.iloc[i]) else np.nan
+        if not np.isfinite(denom) or denom == 0:
+            # pas d'update si pas de std fiable
+            s_pos.iloc[i] = s_pos.iloc[i - 1]
+            s_neg.iloc[i] = s_neg.iloc[i - 1]
+            continue
+
+        z = (logp.iloc[i] - logp.iloc[i - 1]) / (denom + 1e-12)
+        s_pos.iloc[i] = max(0.0, s_pos.iloc[i - 1] + z - h)
+        s_neg.iloc[i] = min(0.0, s_neg.iloc[i - 1] + z + h)
+
+        if s_pos.iloc[i] > k_sigma:
+            breaks.iloc[i] = 1
+            s_pos.iloc[i] = 0.0
+        if s_neg.iloc[i] < -k_sigma:
+            breaks.iloc[i] = 1
+            s_neg.iloc[i] = 0.0
+
+    return pd.DataFrame(
+        {"cusum_pos": s_pos, "cusum_neg": s_neg, "cusum_break_flag": breaks},
+        index=logp.index
+    )
+
+
+def sadf_lite(logp: pd.Series, min_win=250, starts_per_year=10, freq_per_day=24) -> pd.Series:
+    """
+    Approximation rapide de SADF (Supremum ADF):
+      - On échantillonne quelques points de départ par année.
+      - Pour chaque t, on prend le meilleur t-stat ADF parmi ces starts.
+      - Retourne une série 'sadf_score' (plus grand = plus explosif).
+
+    Notes:
+      - Complexité bien plus faible que SADF exact (O(n) * #starts sélectionnés).
+      - Robuste en H1 pour repérer bulles/crashs sans tick data.
+    """
+    logp = logp.astype(float)
+    n = len(logp)
+    out = np.full(n, np.nan, dtype=float)
+    # Taille approx. d’un an en pas H1
+    year_points = 365 * freq_per_day
+    # distance entre deux starts échantillonnés
+    step = max(10, year_points // max(1, int(starts_per_year)))
+
+    for t in range(min_win, n):
+        best = -np.inf
+        # échantillonne les starts en remontant par blocs 'step'
+        start_min = max(0, t - 10 * step)  # sur ~10 “blocs” max pour rester light
+        for s in range(start_min, t - min_win + 1, step):
+            try:
+                # ADF sur les niveaux (spec. simple), t-stat négative si stationnaire
+                # on garde -stat pour que "plus grand" = plus explosif
+                stat = adfuller(logp.iloc[s:t].values, maxlag=1, regression='c', autolag=None)[0]
+                score = -stat
+                if score > best:
+                    best = score
+            except Exception:
+                pass
+        out[t] = best
+    return pd.Series(out, index=logp.index, name="sadf_score")
+
+
+def add_structural_break_features(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+    """
+    Ajoute (optionnellement) les features de breaks structurels à df (par split, no-leak).
+    - Travaille sur log(close)
+    - Ajoute: CUSUM (pos, neg, flag) et/ou SADF-lite (score)
+    """
+    sb_cfg = cfg["features"].get("structural_breaks", {})
+    if not sb_cfg.get("enable", False):
+        return df
+
+    if "close" not in df.columns:
+        logger.warning("[SB] 'close' manquant, impossible de calculer les features de rupture.")
+        return df
+
+    logp = np.log(df["close"].astype(float).clip(lower=1e-12))
+
+    # CUSUM
+    if sb_cfg.get("cusum", {}).get("enable", True):
+        k_sigma = float(sb_cfg["cusum"].get("k_sigma", 5.0))
+        h = float(sb_cfg["cusum"].get("h", 0.01))
+        # fenêtre std pour normaliser -> par défaut, cohérente avec min_window SADF si présent
+        win = int(sb_cfg.get("sadf", {}).get("min_window", 250))
+        cus = cusum_levels(logp, k_sigma=k_sigma, h=h, win=win)
+        for c in cus.columns:
+            df[f"{c}"] = cus[c]
+
+    # SADF-lite
+    if sb_cfg.get("sadf", {}).get("enable", True):
+        min_win = int(sb_cfg["sadf"].get("min_window", 250))
+        starts_per_year = int(sb_cfg["sadf"].get("starts_per_year", 10))
+        # en H1 ~ 24 obs/jour
+        sadf = sadf_lite(logp, min_win=min_win, starts_per_year=starts_per_year, freq_per_day=24)
+        df["sadf_score"] = sadf
+
+    return df
+
+
+# ===============================
+# Labelling
+# ===============================
 def generate_label_with_triple_barrier_on_frac_diff_cumsum(
     df: pd.DataFrame,
     tp_pips: float,
@@ -58,7 +188,7 @@ def generate_label_with_triple_barrier_on_frac_diff_cumsum(
     window: int,
 ) -> list[int]:
     """
-    Labels triple barrière (0 neutre, 1 long, 2 short).
+    Labels triple barrière (0 neutre, 1 long, 2 short), en cumulant les returns frac_diff.
     """
     labels = []
     frac = df["frac_diff"].values
@@ -116,11 +246,29 @@ def select_best_prediction_window(df, tp_pips, sl_pips, pips_size, candidate_win
     return best_window
 
 
-# === Processing pipeline ===
-def process_split(df, split_name, seed, protected_cols, threshold):
+# ===============================
+# Pipeline split-safe
+# ===============================
+def _load_splits(symbol: str, timeframe: str):
+    paths = {
+        "train": FEATURES_DIR / f"{symbol}_{timeframe}_train.parquet",
+        "val":   FEATURES_DIR / f"{symbol}_{timeframe}_val.parquet",
+        "test":  FEATURES_DIR / f"{symbol}_{timeframe}_test.parquet",
+    }
+    dfs = {k: pd.read_parquet(v) for k, v in paths.items()}
+    logger.info(f"Splits chargés : {[f'{k}={len(v)}' for k, v in dfs.items()]}")
+    return dfs
+
+
+def process_split(df: pd.DataFrame, split_name: str, seed: int, protected_cols, threshold):
     """
-    Gère la suppression des features corrélées et la cohérence des colonnes.
+    Ajoute features de rupture (si activées), puis gère la suppression corrélée (train-only),
+    et l'alignement de colonnes pour val/test.
     """
+    # 1) Structural breaks par split (no-leak)
+    df = add_structural_break_features(df, CONFIG)
+
+    # 2) Corrélation (train only) + alignement
     checkpoints_dir = PROJECT_ROOT / "exogenous_model_v0" / "model" / "checkpoints"
     checkpoints_dir.mkdir(parents=True, exist_ok=True)
 
@@ -129,14 +277,12 @@ def process_split(df, split_name, seed, protected_cols, threshold):
 
     if split_name == "train":
         df, dropped = remove_highly_correlated_features(df, threshold, protected_cols)
-
         with open(features_path, "w") as f:
             for c in df.columns:
                 f.write(c + "\n")
         with open(dropped_path, "w") as f:
             for c in dropped:
                 f.write(c + "\n")
-
     else:
         with open(dropped_path, "r") as f:
             dropped = [line.strip() for line in f.readlines()]
@@ -149,7 +295,7 @@ def process_split(df, split_name, seed, protected_cols, threshold):
     return df
 
 
-def add_label(df, prediction_window, split_name):
+def add_label(df: pd.DataFrame, prediction_window: int, split_name: str):
     """
     Applique le triple-barrier labelling.
     """
@@ -165,51 +311,40 @@ def add_label(df, prediction_window, split_name):
     return df
 
 
-def save_processed(df, split_name, seed, symbol, timeframe, debug=False):
-    """
-    Sauvegarde les features + label au format parquet (et CSV optionnel) dans data/processed.
-    """
+def _save_split_parquet(df: pd.DataFrame, split_name: str, seed: int, symbol: str, timeframe: str, debug=False):
     processed_dir = DATA_DIR / "processed" / f"seed_{seed}"
     processed_dir.mkdir(parents=True, exist_ok=True)
 
-    parquet_path = processed_dir / f"{symbol}_{timeframe}_{split_name}.parquet"
-    df.to_parquet(parquet_path, index=True)
-    logger.info(f"{split_name.upper()} sauvegardé (parquet): {parquet_path}")
+    out = processed_dir / f"{symbol}_{timeframe}_{split_name}.parquet"
+    df.to_parquet(out, index=True)
+    logger.info(f"{split_name.upper()} sauvegardé (parquet): {out}")
 
     if debug:
-        csv_path = processed_dir / f"{split_name}.csv"
+        csv_path = processed_dir / f"{symbol}_{timeframe}_{split_name}.csv"
         df.to_csv(csv_path, index=True)
         logger.info(f"Export CSV (debug): {csv_path}")
 
-    return parquet_path
-
+    return out
 
 
 def make_processed(symbol="EURUSD", timeframe="H1", seed=42):
     """
-    Pipeline complet : charge les splits -> nettoie -> labellise -> sauvegarde
+    Pipeline complet : charge features par split -> ajoute SB features -> corr-prune (train) -> label -> save.
     """
     logger.info(f"=== [make_processed] seed={seed} | {symbol}_{timeframe} ===")
 
     protected_cols = set(CONFIG["features"]["protected_cols"])
     threshold = CONFIG["features"]["remove_corr_threshold"]
 
-    # 1️⃣ Charger les splits
-    paths = {
-        "train": FEATURES_DIR / f"{symbol}_{timeframe}_train.parquet",
-        "val": FEATURES_DIR / f"{symbol}_{timeframe}_val.parquet",
-        "test": FEATURES_DIR / f"{symbol}_{timeframe}_test.parquet",
-    }
+    # 1) Charger splits
+    dfs = _load_splits(symbol, timeframe)
 
-    dfs = {k: pd.read_parquet(v) for k, v in paths.items()}
-    logger.info(f"Splits chargés : {[f'{k}={len(v)}' for k, v in dfs.items()]}")
+    # 2) Process features par split (no-leak)
+    train = process_split(dfs["train"].copy(), "train", seed, protected_cols, threshold)
+    val   = process_split(dfs["val"].copy(),   "val",   seed, protected_cols, threshold)
+    test  = process_split(dfs["test"].copy(),  "test",  seed, protected_cols, threshold)
 
-    # 2️⃣ Process features (remove corr, align columns)
-    train = process_split(dfs["train"], "train", seed, protected_cols, threshold)
-    val = process_split(dfs["val"], "val", seed, protected_cols, threshold)
-    test = process_split(dfs["test"], "test", seed, protected_cols, threshold)
-
-    # 3️⃣ Sélection de la meilleure fenêtre (entropie max sur train)
+    # 3) Choix de la fenêtre (entropie) sur train
     candidate_windows = [4, 8, 12, 24, 48]
     best_window = select_best_prediction_window(
         train,
@@ -220,17 +355,17 @@ def make_processed(symbol="EURUSD", timeframe="H1", seed=42):
         seed,
     )
 
-    # 4️⃣ Ajouter labels triple barrière
+    # 4) Labelling
     train = add_label(train, best_window, "train")
-    val = add_label(val, best_window, "val")
-    test = add_label(test, best_window, "test")
+    val   = add_label(val,   best_window, "val")
+    test  = add_label(test,  best_window, "test")
 
-    # 5️⃣ Sauvegarder les splits finaux
-    save_processed(train, "train", seed, symbol, timeframe)
-    save_processed(val, "val", seed, symbol, timeframe)
-    save_processed(test, "test", seed, symbol, timeframe)
+    # 5) Sauvegarde
+    _save_split_parquet(train, "train", seed, symbol, timeframe)
+    _save_split_parquet(val,   "val",   seed, symbol, timeframe)
+    _save_split_parquet(test,  "test",  seed, symbol, timeframe)
 
-    logger.info("make_processed terminé avec succès.")
+    logger.info("✅ make_processed terminé avec succès.")
     return True
 
 
