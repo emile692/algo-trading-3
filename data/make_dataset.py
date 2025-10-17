@@ -8,10 +8,11 @@ from tools.logger import setup_logger
 
 logger = setup_logger()
 
-DATA_DIR = Path("../data")
-RAW_DIR = DATA_DIR / "raw"
-INTERIM_DIR = DATA_DIR / "interim"
-CONFIG_PATH = Path(f"../config/data_sources.yaml")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR     = PROJECT_ROOT / "data"
+RAW_DIR      = DATA_DIR / "raw"
+INTERIM_DIR  = DATA_DIR / "interim"
+CONFIG_PATH  = PROJECT_ROOT / "config" / "data_sources.yaml"
 
 CANONICAL_COLS = ["time", "open", "high", "low", "close", "volume"]
 

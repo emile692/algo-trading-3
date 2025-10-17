@@ -9,10 +9,10 @@ from tools.logger import setup_logger
 
 logger = setup_logger()
 
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-CONFIG_PATH = os.path.join(project_root, 'config', 'config_test.json')
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-INTERIM_DIR = Path("../data/interim")
+CONFIG_PATH  = PROJECT_ROOT / "config" / "config_test.json"
+INTERIM_DIR  = PROJECT_ROOT / "data" / "interim"
 
 def load_config():
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:

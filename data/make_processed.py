@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from statsmodels.tsa.stattools import adfuller
+from sklearn.preprocessing import StandardScaler
+import joblib
 
 from tools.logger import setup_logger
 
@@ -359,6 +361,28 @@ def make_processed(symbol="EURUSD", timeframe="H1", seed=42):
     train = add_label(train, best_window, "train")
     val   = add_label(val,   best_window, "val")
     test  = add_label(test,  best_window, "test")
+
+    # 4.5) Fit/transform du scaler sur train uniquement
+    feature_cols = [c for c in train.columns if c not in ["label", "time"]]
+    scaler = StandardScaler()
+    scaler.fit(train[feature_cols])
+
+    train[feature_cols] = scaler.transform(train[feature_cols])
+    val[feature_cols] = scaler.transform(val[feature_cols])
+    test[feature_cols] = scaler.transform(test[feature_cols])
+
+    # Sauvegarde du scaler (dans checkpoints/)
+    ckpt_dir = PROJECT_ROOT / "exogenous_model" / "model" / "checkpoints"
+    ckpt_dir.mkdir(parents=True, exist_ok=True)
+    joblib.dump(scaler, ckpt_dir / f"scaler_{symbol}_{timeframe}_seed{seed}.pkl")
+
+    # Sauvegarde des métadonnées
+    meta = {
+        "feature_cols": feature_cols,
+        "sequence_length": CONFIG["model"]["sequence_length"]
+    }
+    with open(ckpt_dir / f"meta_{symbol}_{timeframe}_seed{seed}.json", "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=2)
 
     # 5) Sauvegarde
     _save_split_parquet(train, "train", seed, symbol, timeframe)

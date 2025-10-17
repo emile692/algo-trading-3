@@ -15,13 +15,13 @@ from data.make_splits import compute_splits
 
 logger = setup_logger()
 
-# --- Paths ---
-DATA_DIR = Path("../data")
-INTERIM_DIR = DATA_DIR / "interim"
-FEATURES_DIR = DATA_DIR / "features"
-EXTERNAL_DIR = DATA_DIR / "external"
-CONFIG_PATH = Path("../config/config_test.json")
-
+# --- Définition propre des chemins projet ---
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR      = PROJECT_ROOT / "data"
+INTERIM_DIR   = DATA_DIR / "interim"
+FEATURES_DIR  = DATA_DIR / "features"
+EXTERNAL_DIR  = DATA_DIR / "external"
+CONFIG_PATH   = PROJECT_ROOT / "config" / "config_test.json"
 
 # === Helper functions ===
 
