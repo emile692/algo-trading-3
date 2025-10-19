@@ -8,6 +8,7 @@ from sklearn.preprocessing import StandardScaler
 import joblib
 
 from tools.logger import setup_logger
+from pandas.api.types import is_numeric_dtype
 
 logger = setup_logger()
 
@@ -83,7 +84,6 @@ def cusum_levels(logp: pd.Series, k_sigma=5.0, h=0.01, win=250) -> pd.DataFrame:
     for i in range(1, len(logp)):
         denom = sigma.iloc[i] if pd.notna(sigma.iloc[i]) else np.nan
         if not np.isfinite(denom) or denom == 0:
-            # pas d'update si pas de std fiable
             s_pos.iloc[i] = s_pos.iloc[i - 1]
             s_neg.iloc[i] = s_neg.iloc[i - 1]
             continue
@@ -107,31 +107,19 @@ def cusum_levels(logp: pd.Series, k_sigma=5.0, h=0.01, win=250) -> pd.DataFrame:
 
 def sadf_lite(logp: pd.Series, min_win=250, starts_per_year=10, freq_per_day=24) -> pd.Series:
     """
-    Approximation rapide de SADF (Supremum ADF):
-      - On échantillonne quelques points de départ par année.
-      - Pour chaque t, on prend le meilleur t-stat ADF parmi ces starts.
-      - Retourne une série 'sadf_score' (plus grand = plus explosif).
-
-    Notes:
-      - Complexité bien plus faible que SADF exact (O(n) * #starts sélectionnés).
-      - Robuste en H1 pour repérer bulles/crashs sans tick data.
+    Approximation rapide de SADF (Supremum ADF).
     """
     logp = logp.astype(float)
     n = len(logp)
     out = np.full(n, np.nan, dtype=float)
-    # Taille approx. d’un an en pas H1
     year_points = 365 * freq_per_day
-    # distance entre deux starts échantillonnés
     step = max(10, year_points // max(1, int(starts_per_year)))
 
     for t in range(min_win, n):
         best = -np.inf
-        # échantillonne les starts en remontant par blocs 'step'
-        start_min = max(0, t - 10 * step)  # sur ~10 “blocs” max pour rester light
+        start_min = max(0, t - 10 * step)
         for s in range(start_min, t - min_win + 1, step):
             try:
-                # ADF sur les niveaux (spec. simple), t-stat négative si stationnaire
-                # on garde -stat pour que "plus grand" = plus explosif
                 stat = adfuller(logp.iloc[s:t].values, maxlag=1, regression='c', autolag=None)[0]
                 score = -stat
                 if score > best:
@@ -145,8 +133,6 @@ def sadf_lite(logp: pd.Series, min_win=250, starts_per_year=10, freq_per_day=24)
 def add_structural_break_features(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     """
     Ajoute (optionnellement) les features de breaks structurels à df (par split, no-leak).
-    - Travaille sur log(close)
-    - Ajoute: CUSUM (pos, neg, flag) et/ou SADF-lite (score)
     """
     sb_cfg = cfg["features"].get("structural_breaks", {})
     if not sb_cfg.get("enable", False):
@@ -162,7 +148,6 @@ def add_structural_break_features(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     if sb_cfg.get("cusum", {}).get("enable", True):
         k_sigma = float(sb_cfg["cusum"].get("k_sigma", 5.0))
         h = float(sb_cfg["cusum"].get("h", 0.01))
-        # fenêtre std pour normaliser -> par défaut, cohérente avec min_window SADF si présent
         win = int(sb_cfg.get("sadf", {}).get("min_window", 250))
         cus = cusum_levels(logp, k_sigma=k_sigma, h=h, win=win)
         for c in cus.columns:
@@ -172,7 +157,6 @@ def add_structural_break_features(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     if sb_cfg.get("sadf", {}).get("enable", True):
         min_win = int(sb_cfg["sadf"].get("min_window", 250))
         starts_per_year = int(sb_cfg["sadf"].get("starts_per_year", 10))
-        # en H1 ~ 24 obs/jour
         sadf = sadf_lite(logp, min_win=min_win, starts_per_year=starts_per_year, freq_per_day=24)
         df["sadf_score"] = sadf
 
@@ -329,9 +313,36 @@ def _save_split_parquet(df: pd.DataFrame, split_name: str, seed: int, symbol: st
     return out
 
 
+# ===============================
+# Scaling utils (robustes)
+# ===============================
+IGNORE_COLS = {
+    "label", "split", "dataset", "set", "partition",
+    "symbol", "time", "timestamp", "date", "datetime", "index"
+}
+
+def get_numeric_feature_cols(df: pd.DataFrame, ignore: set) -> list:
+    """
+    Retourne les colonnes numériques (dtype numérique) en excluant explicitement 'ignore'.
+    """
+    cols = [c for c in df.columns if c not in ignore and is_numeric_dtype(df[c])]
+    return cols
+
+def sanitize_for_scaling(df: pd.DataFrame, cols: list) -> pd.DataFrame:
+    """
+    Remplace inf/-inf par NaN, puis ffill/bfill pour éviter des NaN avant StandardScaler.
+    """
+    df[cols] = df[cols].replace([np.inf, -np.inf], np.nan)
+    # ffill/bfill pour séries temporelles ; si tout NaN, restera NaN → on gérera via remplissage zéro
+    df[cols] = df[cols].ffill().bfill()
+    # S'il reste des NaN (ex: début de série entière NaN), on met 0
+    df[cols] = df[cols].fillna(0.0)
+    return df
+
+
 def make_processed(symbol="EURUSD", timeframe="H1", seed=42):
     """
-    Pipeline complet : charge features par split -> ajoute SB features -> corr-prune (train) -> label -> save.
+    Pipeline complet : charge features par split -> ajoute SB features -> corr-prune (train) -> label -> scale -> save.
     """
     logger.info(f"=== [make_processed] seed={seed} | {symbol}_{timeframe} ===")
 
@@ -345,6 +356,12 @@ def make_processed(symbol="EURUSD", timeframe="H1", seed=42):
     train = process_split(dfs["train"].copy(), "train", seed, protected_cols, threshold)
     val   = process_split(dfs["val"].copy(),   "val",   seed, protected_cols, threshold)
     test  = process_split(dfs["test"].copy(),  "test",  seed, protected_cols, threshold)
+
+    # (Debug) Log dtypes utiles
+    logger.debug("[Dtypes][TRAIN]\n" + train.dtypes.sort_index().to_string())
+    obj_cols = [c for c in train.columns if train[c].dtype == "object"]
+    if obj_cols:
+        logger.warning(f"[TRAIN] Colonnes dtype=object détectées: {obj_cols}")
 
     # 3) Choix de la fenêtre (entropie) sur train
     candidate_windows = [4, 8, 12, 24, 48]
@@ -362,16 +379,28 @@ def make_processed(symbol="EURUSD", timeframe="H1", seed=42):
     val   = add_label(val,   best_window, "val")
     test  = add_label(test,  best_window, "test")
 
-    # 4.5) Fit/transform du scaler sur train uniquement
-    feature_cols = [c for c in train.columns if c not in ["label", "time"]]
+    # 4.5) Sélection robuste des features numériques (train-only) + scaling split-safe
+    feature_cols = get_numeric_feature_cols(train, IGNORE_COLS)
+    if not feature_cols:
+        raise ValueError("[Scaling] Aucune feature numérique éligible après filtrage. Vérifier le pipeline upstream.")
+
+    # Sanitize (NaN/inf) avant fit/transform
+    train = sanitize_for_scaling(train, feature_cols)
+    val   = sanitize_for_scaling(val,   feature_cols)
+    test  = sanitize_for_scaling(test,  feature_cols)
+
     scaler = StandardScaler()
     scaler.fit(train[feature_cols])
 
-    train[feature_cols] = scaler.transform(train[feature_cols])
-    val[feature_cols] = scaler.transform(val[feature_cols])
-    test[feature_cols] = scaler.transform(test[feature_cols])
+    train.loc[:, feature_cols] = scaler.transform(train[feature_cols])
+    val.loc[:, feature_cols]   = scaler.transform(val[feature_cols])
+    test.loc[:, feature_cols]  = scaler.transform(test[feature_cols])
+
+    logger.info(f"[make_processed] Nb features retenues pour scaling: {len(feature_cols)}")
+    logger.debug(f"[make_processed] Features: {feature_cols}")
 
     # Sauvegarde du scaler (dans checkpoints/)
+    # NOTE : chemin harmonisé avec 'exogenous_model' (ton code original avait v0 et non-v0).
     ckpt_dir = PROJECT_ROOT / "exogenous_model" / "model" / "checkpoints"
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     joblib.dump(scaler, ckpt_dir / f"scaler_{symbol}_{timeframe}_seed{seed}.pkl")
