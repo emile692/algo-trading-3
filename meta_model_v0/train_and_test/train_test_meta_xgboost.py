@@ -74,7 +74,7 @@ def optimize_threshold_for_error_recall(y_true, prob_class0, beta=BETA_FOR_ERROR
 def train_and_test_meta_xgboost(seed, logger):
     # === Chargement du dataset méta ===
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    meta_dataset_path = os.path.join(project_root, 'meta_model', 'dataset', 'features_and_target',
+    meta_dataset_path = os.path.join(project_root, 'meta_model_v0', 'dataset', 'features_and_target',
                                      f"meta_dataset_seed_{seed}.csv")
     df = pd.read_csv(meta_dataset_path)
 
@@ -226,7 +226,7 @@ def train_and_test_meta_xgboost(seed, logger):
     for feat, imp in shap_sum.head(30).items():
         logger.info(f"  {feat}: {imp:.4f}")
 
-    shap_path = os.path.join(project_root, 'meta_model', 'results', f'seed_{seed}')
+    shap_path = os.path.join(project_root, 'meta_model_v0', 'results', f'seed_{seed}')
     os.makedirs(shap_path, exist_ok=True)
 
     plt.figure(figsize=(10, 8))
@@ -236,7 +236,7 @@ def train_and_test_meta_xgboost(seed, logger):
     plt.close()
 
     # === Sauvegarde du modèle ===
-    results_dir = os.path.join(project_root, 'meta_model', 'results', f'seed_{seed}')
+    results_dir = os.path.join(project_root, 'meta_model_v0', 'results', f'seed_{seed}')
     os.makedirs(results_dir, exist_ok=True)
 
     model_path = os.path.join(results_dir, f"xgboost_meta_model_seed_{seed}.joblib")

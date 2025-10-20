@@ -64,7 +64,7 @@ def analyse_capture_ratio(seed) :
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
-    results_dir = os.path.join(project_root, 'meta_model','results', f'seed_{seed}')
+    results_dir = os.path.join(project_root, 'meta_model_v0','results', f'seed_{seed}')
 
     y_proba_path = os.path.join(results_dir, 'xgboost_meta_model_probs.npy')
     y_pred_path = os.path.join(results_dir, 'xgboost_meta_model_y_pred.npy')
@@ -164,7 +164,7 @@ def analyse_positions_and_prices(seed):
         seed (int): Seed pour retrouver les données correspondantes (X_test, y_pred, etc.).
     """
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    results_dir = os.path.join(project_root, 'meta_model', 'results', f'seed_{seed}')
+    results_dir = os.path.join(project_root, 'meta_model_v0', 'results', f'seed_{seed}')
 
     y_proba_path = os.path.join(results_dir, 'xgboost_meta_model_probs.npy')
     y_pred_path = os.path.join(results_dir, 'xgboost_meta_model_y_pred.npy')

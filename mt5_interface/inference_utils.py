@@ -13,7 +13,7 @@ def load_models(best_seed):
     # === Paths === #
     lstm_weights_path = os.path.join(ROOT, 'exogenous_model_v0', 'model', 'checkpoints', f'model_seed_{best_seed}.pt')
     scaler_path = os.path.join(ROOT, 'exogenous_model_v0', 'model', 'checkpoints', f'scaler_seed_{best_seed}.pkl')
-    xgb_path = os.path.join(ROOT, 'meta_model', 'results', f'seed_{best_seed}', f'xgboost_meta_model_seed_{best_seed}.joblib')
+    xgb_path = os.path.join(ROOT, 'meta_model_v0', 'results', f'seed_{best_seed}', f'xgboost_meta_model_seed_{best_seed}.joblib')
 
     # === Load scaler === #
     scaler = joblib.load(scaler_path)

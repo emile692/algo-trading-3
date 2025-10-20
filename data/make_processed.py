@@ -389,12 +389,16 @@ def make_processed(symbol="EURUSD", timeframe="H1", seed=42):
     val   = sanitize_for_scaling(val,   feature_cols)
     test  = sanitize_for_scaling(test,  feature_cols)
 
+    train[feature_cols] = train[feature_cols].astype(float)
+    val[feature_cols] = val[feature_cols].astype(float)
+    test[feature_cols] = test[feature_cols].astype(float)
+
     scaler = StandardScaler()
     scaler.fit(train[feature_cols])
 
     train.loc[:, feature_cols] = scaler.transform(train[feature_cols])
-    val.loc[:, feature_cols]   = scaler.transform(val[feature_cols])
-    test.loc[:, feature_cols]  = scaler.transform(test[feature_cols])
+    val.loc[:, feature_cols] = scaler.transform(val[feature_cols])
+    test.loc[:, feature_cols] = scaler.transform(test[feature_cols])
 
     logger.info(f"[make_processed] Nb features retenues pour scaling: {len(feature_cols)}")
     logger.debug(f"[make_processed] Features: {feature_cols}")

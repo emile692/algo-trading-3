@@ -97,9 +97,9 @@ def main(seed: int):
     # ---------- chemins ----------
     project_root = os.path.abspath(os.path.dirname(__file__))
     dataset_csv = os.path.join(
-        project_root, "meta_model", "dataset", "features_and_target", f"meta_dataset_seed_{seed}.csv"
+        project_root, "meta_model_v0", "dataset", "features_and_target", f"meta_dataset_seed_{seed}.csv"
     )
-    results_dir = os.path.join(project_root, "meta_model", "results", f"seed_{seed}")
+    results_dir = os.path.join(project_root, "meta_model_v0", "results", f"seed_{seed}")
     os.makedirs(results_dir, exist_ok=True)
 
     model_path = os.path.join(results_dir, f"xgboost_meta_model_seed_{seed}.joblib")

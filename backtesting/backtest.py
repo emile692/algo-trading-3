@@ -282,10 +282,10 @@ if __name__ == "__main__":
     seed = 42
     res = run_backtest_triple_barrier(
         seed=seed,
-        y_proba_meta_path=os.path.join(project_root, "meta_model", "results", f"seed_{seed}", "xgboost_meta_model_probs.npy"),
-        y_pred_exo_path=os.path.join(project_root, "meta_model", "results", f"seed_{seed}", "exo_model_y_pred.npy"),
-        time_pred_meta_path=os.path.join(project_root, "meta_model", "results", f"seed_{seed}", "xgboost_meta_model_time_test.npy"),
-        meta_model_path=os.path.join(project_root, "meta_model", "results", f"seed_{seed}", f"xgboost_meta_model_seed_{seed}.joblib"),
+        y_proba_meta_path=os.path.join(project_root, "meta_model_v0", "results", f"seed_{seed}", "xgboost_meta_model_probs.npy"),
+        y_pred_exo_path=os.path.join(project_root, "meta_model_v0", "results", f"seed_{seed}", "exo_model_y_pred.npy"),
+        time_pred_meta_path=os.path.join(project_root, "meta_model_v0", "results", f"seed_{seed}", "xgboost_meta_model_time_test.npy"),
+        meta_model_path=os.path.join(project_root, "meta_model_v0", "results", f"seed_{seed}", f"xgboost_meta_model_seed_{seed}.joblib"),
         df_test_raw_exo_path=os.path.join(project_root, "exogenous_model_v0", "dataset", "splits", f"seed_{seed}", "df_test_processed.csv"),
         capital=10000,
         transaction_fee=0.001,

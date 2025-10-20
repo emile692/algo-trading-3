@@ -20,9 +20,9 @@ uv.lock
 
 # Données temporaires
 exogenous_model_v0/**/__pycache__/
-meta_model/**/__pycache__/
+meta_model_v0/**/__pycache__/
 **/checkpoints/
 **/features_and_target/
 **/splits/
-meta_model/results/
+meta_model_v0/results/
 /log/

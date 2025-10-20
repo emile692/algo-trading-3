@@ -8,8 +8,8 @@ from tools.logger import setup_logger
 from exogenous_model_v0.dataset.generate_dataset import generate_exogenous_dataset
 from exogenous_model_v0.train.train_model import train_and_save_model
 from exogenous_model_v0.eval.evaluate_model import evaluate_model
-from meta_model.dataset.generate_meta_dataset import generate_meta_dataset
-from meta_model.train_and_test.train_test_meta_xgboost import train_and_test_meta_xgboost
+from meta_model_v0.dataset.generate_meta_dataset import generate_meta_dataset
+from meta_model_v0.train_and_test.train_test_meta_xgboost import train_and_test_meta_xgboost
 from strategy.utils import analyse_capture_ratio
 
 
@@ -80,7 +80,7 @@ def run_multi_seed():
     logger.info("Écart-type des scores :")
     logger.info(df.std(numeric_only=True).round(4))
 
-    output_path = "meta_model/results/results_multi_seed.csv"
+    output_path = "meta_model_v0/results/results_multi_seed.csv"
     df.to_csv(output_path, index=False)
     logger.info(f"Résultats enregistrés dans {output_path}")
 
