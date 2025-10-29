@@ -10,7 +10,7 @@ from ta.volatility import BollingerBands, AverageTrueRange
 from ta.volume import OnBalanceVolumeIndicator, VolumeWeightedAveragePrice
 
 from tools.logger import setup_logger
-from exogenous_model_v0.utils.fracdiff import FracDifferentiator
+from old.exogenous_model_v0.utils.fracdiff import FracDifferentiator
 from data.make_splits import compute_splits
 
 logger = setup_logger()
@@ -21,7 +21,7 @@ DATA_DIR      = PROJECT_ROOT / "data"
 INTERIM_DIR   = DATA_DIR / "interim"
 FEATURES_DIR  = DATA_DIR / "features"
 EXTERNAL_DIR  = DATA_DIR / "external"
-CONFIG_PATH   = PROJECT_ROOT / "config" / "config_test.json"
+CONFIG_PATH   = PROJECT_ROOT / "config" / "config.json"
 
 # === Helper functions ===
 
@@ -163,9 +163,10 @@ def _compute_split(df_full, start, end, frac, cfg, split_name):
 
 # === MAIN FUNCTION ===
 
-def make_features(symbol: str, timeframe: str):
+def make_features(symbol: str, timeframe: str, splits: dict | None = None):
     cfg = _load_config()
-    splits = compute_splits(symbol, timeframe)  # ← basé sur ratios
+    if splits is None:
+        splits = compute_splits(symbol, timeframe)
 
     df = pd.read_parquet(INTERIM_DIR / f"{symbol}_{timeframe}.parquet")
     _ensure_cols(df)

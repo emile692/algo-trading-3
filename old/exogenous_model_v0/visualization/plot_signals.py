@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 import joblib
 import plotly.graph_objects as go
-from exogenous_model_v0.model.core import LSTMClassifier
+from old.exogenous_model_v0.model.core import LSTMClassifier
 
 import plotly.io as pio
 pio.renderers.default = "browser"

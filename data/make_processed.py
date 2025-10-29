@@ -16,7 +16,7 @@ logger = setup_logger()
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
 FEATURES_DIR = DATA_DIR / "features"
-CONFIG_PATH = PROJECT_ROOT / "config" / "config_test.json"
+CONFIG_PATH = PROJECT_ROOT / "config" / "config.json"
 
 # === Load config ===
 with open(CONFIG_PATH, "r", encoding="utf-8") as f:
@@ -364,7 +364,7 @@ def make_processed(symbol="EURUSD", timeframe="H1", seed=42):
         logger.warning(f"[TRAIN] Colonnes dtype=object détectées: {obj_cols}")
 
     # 3) Choix de la fenêtre (entropie) sur train
-    candidate_windows = [4, 8, 12, 24, 48]
+    candidate_windows =  set(CONFIG["label"]["candidate_windows"])
     best_window = select_best_prediction_window(
         train,
         CONFIG["label"]["take_profit_pips"],

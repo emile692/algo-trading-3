@@ -14,8 +14,8 @@ if __name__ == "__main__":
     logger.info(f"Démarrage du pipeline data {symbol}_{timeframe} avec data model {source} (seed={seed})")
 
     make_interim(symbol, timeframe, source)
-    compute_splits(symbol, timeframe)
-    make_features(symbol, timeframe)
+    splits = compute_splits(symbol, timeframe)
+    make_features(symbol, timeframe, splits)
     make_processed(symbol, timeframe, seed)
 
     logger.info("Pipeline complet terminé avec succès")

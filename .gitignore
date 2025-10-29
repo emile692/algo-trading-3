@@ -19,7 +19,7 @@ venv/
 uv.lock
 
 # Données temporaires
-exogenous_model_v0/**/__pycache__/
+old/exogenous_model_v0/**/__pycache__/
 meta_model_v0/**/__pycache__/
 **/checkpoints/
 **/features_and_target/

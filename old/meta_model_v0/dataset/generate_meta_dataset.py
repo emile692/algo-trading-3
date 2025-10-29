@@ -4,9 +4,9 @@ import os
 import torch
 import numpy as np
 import pandas as pd
-from exogenous_model_v0.model.core import LSTMClassifier
-from exogenous_model_v0.prediction.prediction import predict_exo_model
-from exogenous_model_v0.dataset.generate_dataset import logger
+from old.exogenous_model_v0.model.core import LSTMClassifier
+from old.exogenous_model_v0.prediction.prediction import predict_exo_model
+from old.exogenous_model_v0.dataset.generate_dataset import logger
 
 
 # === ENTROPIE (De Prado inspired) === #
@@ -128,7 +128,7 @@ def generate_meta_dataset(seed, logger):
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
     # Chargement config
-    config_path = os.path.join(project_root, 'config', 'config.json')
+    config_path = os.path.join(project_root, 'config', 'config_old.json')
     with open(config_path) as f:
         config = json.load(f)
 

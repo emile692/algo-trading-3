@@ -16,7 +16,7 @@ from exogenous_model.training.utils import seed_all, ensure_dir, save_json
 logger = setup_logger()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-CONFIG_PATH  = PROJECT_ROOT / "config" / "config_test.json"
+CONFIG_PATH  = PROJECT_ROOT / "config" / "config.json"
 DATA_PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 
 def load_config():

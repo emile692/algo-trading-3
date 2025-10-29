@@ -179,14 +179,24 @@ def evaluate_lstm(symbol="EURUSD", timeframe="H1", seed=42, batch_size=64):
         )
     )
 
+    # 7bis) Construire les timestamps alignés aux séquences AVANT de sauvegarder
+    try:
+        times = df_test["time"].iloc[seq_len - 1: seq_len - 1 + len(y_true)].to_numpy()
+    except Exception:
+        times = np.arange(len(y_true))
+    time_test = times
+
     # 8) Sauvegardes (metrics + prédictions + CSV d’analyse horodaté)
     out_dir = RESULTS_DIR / f"seed_{seed}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # prédictions brutes
-    np.save(out_dir / f"y_true_seed_{seed}.npy",  y_true)
-    np.save(out_dir / f"y_pred_seed_{seed}.npy",  y_pred)
+    np.save(out_dir / f"y_true_seed_{seed}.npy", y_true)
+    np.save(out_dir / f"y_pred_seed_{seed}.npy", y_pred)
     np.save(out_dir / f"y_proba_seed_{seed}.npy", y_proba)
+
+    # ✅ nouveau : fichiers temps compatibles backtest
+    np.save(out_dir / "time.npy", time_test)
 
     # métriques détaillées
     with open(out_dir / "metrics_detailed.json", "w", encoding="utf-8") as f:

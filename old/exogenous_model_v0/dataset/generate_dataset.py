@@ -9,13 +9,13 @@ from ta.trend import SMAIndicator, EMAIndicator, MACD, ADXIndicator, CCIIndicato
 from ta.volatility import BollingerBands, AverageTrueRange
 from ta.volume import OnBalanceVolumeIndicator, VolumeWeightedAveragePrice
 from tools.logger import setup_logger
-from exogenous_model_v0.utils.fracdiff import FracDifferentiator
+from old.exogenous_model_v0.utils.fracdiff import FracDifferentiator
 import pandas_datareader.data as web
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 logger = setup_logger()
 
-config_path = os.path.join(project_root, 'config', 'config.json')
+config_path = os.path.join(project_root, 'config', 'config_old.json')
 
 with open(config_path, "r") as f:
     config = json.load(f)
@@ -104,7 +104,7 @@ def select_best_prediction_window(df, tp_pips, sl_pips, pips_size, candidate_win
     """
     Évalue chaque fenêtre candidate sur le jeu fourni (train) en calculant
     l'entropie de la distribution des labels. Retourne la fenêtre qui maximise l'entropie.
-    Sauvegarde aussi la fenêtre choisie dans les checkpoints et dans config.json.
+    Sauvegarde aussi la fenêtre choisie dans les checkpoints et dans config_old.json.
     """
     results = {}
     for w in candidate_windows:

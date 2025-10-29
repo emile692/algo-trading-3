@@ -10,11 +10,11 @@ import joblib
 from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.class_weight import compute_class_weight
-from exogenous_model_v0.model.core import LSTMClassifier
-from exogenous_model_v0.dataset.generate_dataset import logger
+from old.exogenous_model_v0.model.core import LSTMClassifier
+from old.exogenous_model_v0.dataset.generate_dataset import logger
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-config_path = os.path.join(project_root, 'config', 'config.json')
+config_path = os.path.join(project_root, 'config', 'config_old.json')
 
 # === CONFIGURATION === #
 with open(config_path) as f:

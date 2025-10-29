@@ -10,7 +10,7 @@ from sklearn.metrics import (
 )
 
 from tools.logger import setup_logger
-from exogenous_model_v0.model.core import LSTMClassifier
+from old.exogenous_model_v0.model.core import LSTMClassifier
 
 BATCH_SIZE = 64
 
@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     logger = setup_logger()
 
-    model_path = r"..//model//checkpoints//model_seed_42.pt"
+    model_path = r"../model/checkpoints/model_seed_42.pt"
 
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"Modèle introuvable : {model_path}")

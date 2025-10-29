@@ -11,7 +11,7 @@ logger = setup_logger()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-CONFIG_PATH  = PROJECT_ROOT / "config" / "config_test.json"
+CONFIG_PATH  = PROJECT_ROOT / "config" / "config.json"
 INTERIM_DIR  = PROJECT_ROOT / "data" / "interim"
 
 def load_config():

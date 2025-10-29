@@ -2,9 +2,8 @@
 import os
 import torch
 import joblib
-import pickle
 
-from exogenous_model_v0.model.core import LSTMClassifier  # Assure-toi que ce chemin est correct
+from old.exogenous_model_v0.model.core import LSTMClassifier  # Assure-toi que ce chemin est correct
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 

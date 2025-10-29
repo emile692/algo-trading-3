@@ -6,7 +6,7 @@ from sklearn.model_selection import TimeSeriesSplit
 from xgboost import XGBClassifier
 from sklearn.metrics import (
     classification_report, confusion_matrix, roc_auc_score, roc_curve,
-    f1_score, fbeta_score, precision_recall_curve
+    fbeta_score, precision_recall_curve
 )
 from sklearn.calibration import CalibratedClassifierCV
 import joblib
@@ -303,5 +303,5 @@ def train_and_test_meta_xgboost(seed, logger):
 
 
 if __name__ == "__main__":
-    from exogenous_model_v0.dataset.generate_dataset import logger
+    from old.exogenous_model_v0.dataset.generate_dataset import logger
     train_and_test_meta_xgboost(42, logger)

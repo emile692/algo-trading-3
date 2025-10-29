@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from exogenous_model_v0.dataset.generate_dataset import process_data
+from old.exogenous_model_v0.dataset.generate_dataset import process_data
 from inference_utils import load_models
 import os
 

@@ -1,0 +1,28 @@
+{
+    "general": {
+        "seeds": [
+            42
+        ]
+    },
+    "model": {
+        "batch_size": 64,
+        "epochs": 100,
+        "learning_rate": 0.001,
+        "patience": 10,
+        "sequence_length": 200,
+        "d_optimal": 0.5
+    },
+    "meta_model": {
+        "batch_size": 64,
+        "epochs": 100,
+        "learning_rate": 0.001,
+        "patience": 10
+    },
+    "label": {
+        "take_profit_pips": 60,
+        "stop_loss_pips": 60,
+        "output_dataset_path": "exogenous_model\\dataset\\features_and_target\\features_and_target.csv",
+        "pips_size": 0.0001,
+        "window": 4
+    }
+}
